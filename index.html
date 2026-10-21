@@ -1,0 +1,1388 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#e8ecf2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="小账 Tally">
+<title>小账 · AI 记账</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+(function(){try{var s=JSON.parse(localStorage.getItem('xz.settings')||'{}'),m=(s.theme&&s.theme.mode)||'auto';
+if(m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-dark','')}catch(e){}})();
+</script>
+<style>
+:root{
+ --font:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","HarmonyOS Sans SC","MiSans","Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+ --num:ui-rounded,"SF Pro Rounded","SF Pro Display","Helvetica Neue",Roboto,"Segoe UI",Arial,system-ui,-apple-system,"HarmonyOS Sans SC","MiSans",sans-serif;
+ --bg1:#e8ecf2;--bg2:#d3dae6;--blob1:rgba(140,160,195,.45);--blob2:rgba(196,200,226,.55);
+ --hero1:#394557;--hero2:#5d6b82;--ac:#394557;--onac:#fff;
+ --glass:rgba(255,255,255,.52);--glass2:rgba(255,255,255,.74);--gb:rgba(255,255,255,.72);--sh:0 10px 30px -12px rgba(40,52,72,.18);
+ --ink:#1d2531;--ink2:#4a5567;--mut:#8b95a5;--line:rgba(29,37,49,.07);--chip:rgba(29,37,49,.055);
+ --in:#d9574f;--err:#c2483d;
+ --W:560px;--navh:62px;color-scheme:light}
+:root[data-dark]{--bg1:#0e1219;--bg2:#151b26;--glass:rgba(33,40,53,.55);--glass2:rgba(39,47,62,.82);--gb:rgba(255,255,255,.07);--sh:0 10px 30px -12px rgba(0,0,0,.5);
+ --ink:#e9edf4;--ink2:#b8c1cf;--mut:#7d8899;--line:rgba(255,255,255,.07);--chip:rgba(255,255,255,.07);--in:#f08b84;--err:#f08b84;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font:15px/1.55 var(--font);color:var(--ink);background:var(--bg1);min-height:100dvh;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.bgfx{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+ radial-gradient(60% 42% at 8% 6%,var(--blob1),transparent 70%),
+ radial-gradient(55% 40% at 100% 38%,var(--blob2),transparent 72%),
+ radial-gradient(70% 45% at 25% 100%,var(--blob1),transparent 72%),
+ linear-gradient(170deg,var(--bg1),var(--bg2))}
+:root[data-dark] .bgfx{background:radial-gradient(60% 42% at 8% 6%,var(--blob1),transparent 70%),radial-gradient(55% 40% at 100% 38%,var(--blob2),transparent 72%),linear-gradient(170deg,var(--bg1),var(--bg2))}
+:root[data-dark] .bgfx::after{content:'';position:absolute;inset:0;background:rgba(10,13,19,.62)}
+.app{max-width:var(--W);margin:0 auto;min-height:100dvh;position:relative}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.01em}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid var(--gb);box-shadow:var(--sh)}
+.cico{width:18px;height:18px;display:block;flex:none}
+.tico{display:grid;place-items:center;font-size:16px;line-height:1;font-style:normal}
+.page{display:none;padding:0 16px calc(var(--navh) + env(safe-area-inset-bottom) + 34px)}
+.page.on{display:block}
+.top{display:flex;align-items:center;justify-content:center;height:54px;margin-top:env(safe-area-inset-top)}
+.top h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.02em}
+
+/* ---------- 深色主卡 (参考图那张) ---------- */
+.hero{position:relative;overflow:hidden;border-radius:24px;padding:16px 18px 18px;color:#fff;background:linear-gradient(150deg,var(--hero1),var(--hero2));box-shadow:0 20px 36px -18px var(--hero1),inset 0 1px 0 rgba(255,255,255,.16)}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(75% 65% at 92% -5%,rgba(255,255,255,.2),transparent 62%),radial-gradient(60% 50% at -5% 110%,rgba(255,255,255,.08),transparent 60%);pointer-events:none}
+.hero>*{position:relative}
+.hero .k{font-size:13px;color:rgba(255,255,255,.7)}
+.hero .v{font-size:28px;line-height:1.25;margin-top:3px;white-space:nowrap}
+.hero .v.in{color:#ffb0a9}
+.hero .sub{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:12px}
+.hrow{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.hpill{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:999px;padding:5px 10px 5px 12px;font-size:13.5px;display:inline-flex;align-items:center;gap:3px}
+.hpill .cico{width:14px;height:14px;opacity:.8}
+.hlink{margin-left:auto;border:0;background:none;color:rgba(255,255,255,.72);font-size:13px;display:inline-flex;align-items:center;gap:1px;padding:4px 0}
+.hlink .cico{width:14px;height:14px}
+.hnums{display:flex;gap:16px}
+.hnums>div{flex:1;min-width:0}
+.hnums .v{overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- 通用卡片 ---------- */
+.card{border-radius:22px;padding:14px 16px;margin-top:12px}
+.card h3{margin:0 0 8px;font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mini{display:inline-flex;background:var(--chip);border-radius:999px;padding:2px}
+.mini button{border:0;background:none;font-size:12px;padding:3px 11px;border-radius:999px;color:var(--mut);font-weight:500}
+.mini button.on{background:var(--glass2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.seg{display:inline-flex;border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:6px 15px;font-size:13.5px;color:var(--ink2);font-weight:500}
+.seg button.on{background:var(--ac);color:var(--onac)}
+.empty{text-align:center;color:var(--mut);font-size:13.5px;padding:26px 10px;line-height:1.9}
+
+/* ---------- 底栏: 悬浮胶囊 + 中间加号 ---------- */
+.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 10px);width:min(calc(100% - 24px),calc(var(--W) - 24px));height:var(--navh);border-radius:999px;display:flex;align-items:center;padding:0 6px;z-index:20;background:var(--glass2)}
+.tabs button{flex:1;border:0;background:none;height:100%;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--ink2);position:relative;padding:0}
+.tabs button span{padding:8px 13px;border-radius:999px;transition:background .2s,color .2s;white-space:nowrap}
+.tabs button.on span{background:var(--ac);color:var(--onac)}
+.tabs .plus{flex:0 0 70px}
+.tabs .plus span{width:58px;height:58px;border-radius:50%;padding:0;display:grid;place-items:center;background:linear-gradient(150deg,var(--hero1),var(--hero2));color:#fff;margin-top:-22px;box-shadow:0 14px 26px -10px var(--hero1),inset 0 1px 0 rgba(255,255,255,.2)}
+.tabs .plus .cico{width:26px;height:26px}
+.tabs .plus:active span{transform:scale(.94)}
+.tabs .dot{position:absolute;top:12px;right:calc(50% - 26px);width:8px;height:8px;border-radius:50%;background:var(--in);display:none}
+.tabs button.unread .dot{display:block}
+body.kb .tabs{display:none}
+
+/* ---------- 聊天 ---------- */
+#pgChat.on{display:flex;flex-direction:column;height:var(--vvh,100dvh);padding:0 0 calc(var(--navh) + env(safe-area-inset-bottom) + 18px)}
+body.kb #pgChat.on{padding-bottom:8px}
+.chead{display:flex;align-items:center;gap:11px;padding:10px 16px 8px;margin-top:env(safe-area-inset-top)}
+.ava{width:42px;height:42px;border-radius:15px;background:linear-gradient(150deg,var(--hero1),var(--hero2));color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px;flex:none;box-shadow:0 8px 18px -10px var(--hero1)}
+.who{flex:1;min-width:0;line-height:1.3}
+.who b{display:block;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden}
+.who span i{width:6px;height:6px;border-radius:50%;background:#5bb98c;flex:none}
+.who span i.off{background:var(--mut)}
+.bell{height:38px;border-radius:999px;padding:0 13px 0 11px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);flex:none}
+.bell .cico{width:17px;height:17px}
+.bell.on{color:var(--ink)}
+.tcard{display:flex;align-items:center;gap:10px;margin:2px 16px 4px;padding:13px 16px 13px 18px;border:0;text-align:left;width:auto}
+.tcard>div{flex:1;min-width:0}
+.tcard .v{font-size:21px;margin-top:1px}
+.tcard .k{font-size:12px}
+.tcard .go{flex:none;opacity:.7}
+.msgs{flex:1;overflow-y:auto;padding:12px 16px 10px;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px}
+.ctxcut{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--mut);margin:6px 0}
+.ctxcut::before,.ctxcut::after{content:'';flex:1;height:1px;background:var(--line)}
+.day{align-self:center;font-size:11.5px;color:var(--mut);padding:2px 10px;margin:4px 0 0}
+.msg{display:flex;flex-direction:column;gap:6px;max-width:86%}
+.msg.u{align-self:flex-end;align-items:flex-end}
+.msg.a{align-self:flex-start;align-items:flex-start}
+.bub{padding:10px 14px;border-radius:20px;font-size:15.5px;line-height:1.6;word-break:break-word}
+.msg.u .bub{background:var(--ac);color:var(--onac);border-bottom-right-radius:7px}
+.msg.a .bub{background:var(--glass2);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--gb);border-bottom-left-radius:7px;box-shadow:0 6px 18px -12px rgba(40,52,72,.25)}
+.msg.err .bub.e{color:var(--err);font-size:14px}
+.msg .meta{font-size:11px;color:var(--mut);padding:0 6px;opacity:.8}
+.msg .tag{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:4px;padding:0 4px}
+.msg .tag .cico{width:13px;height:13px}
+.typing{display:inline-flex;gap:4px;padding:6px 2px;vertical-align:middle}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--mut);opacity:.35;animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+.think{font-size:12.5px;color:var(--mut);margin-left:6px}
+@keyframes blink{0%,80%,100%{opacity:.25;transform:none}40%{opacity:.9;transform:translateY(-2px)}}
+.rc{display:flex;align-items:center;gap:10px;border-radius:18px;padding:9px 9px 9px 9px;width:300px;max-width:100%}
+.rc .t1,.rc .t2{white-space:normal!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word}
+.rc .ei{width:36px;height:36px}
+.rc .mid{flex:1;min-width:0;line-height:1.35}
+.rc .t1{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc .t2{font-size:11.5px;color:var(--mut)}
+.rc .amt{font-size:16px;flex:none}
+.rc.in .amt{color:var(--in)}
+.rc .undo{border:0;background:var(--chip);color:var(--ink2);font-size:11.5px;padding:4px 9px;border-radius:999px;flex:none}
+.rc.gone>*:not(.undo){opacity:.5}
+.rc.gone .t1,.rc.gone .amt{text-decoration:line-through}
+.tchip{font-size:12px;color:var(--ink2);border-radius:999px;padding:4px 12px 4px 9px;display:inline-flex;gap:5px;align-items:center;border:1px solid var(--gb);background:var(--glass)}
+.tchip .cico{width:13px;height:13px}
+.tchip.warn{color:var(--err)}
+.retry{border:1px solid var(--gb);background:var(--glass2);border-radius:999px;font-size:12.5px;padding:4px 14px}
+.hello{margin:auto 0;text-align:center;padding:24px 8px;color:var(--mut)}
+.hello .ava{width:64px;height:64px;font-size:26px;border-radius:22px;margin:0 auto 14px}
+.hello h2{margin:0 0 4px;font-weight:600;font-size:19px;color:var(--ink)}
+.hello p{margin:0 auto 18px;font-size:15px;color:var(--ink2)}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.sugs button{border-radius:999px;padding:7px 14px;font-size:13.5px;color:var(--ink2)}
+.nokey{margin:0 16px 8px;padding:10px 12px 10px 16px;border-radius:18px;font-size:13.5px;display:flex;align-items:center;gap:10px;color:var(--ink2)}
+.nokey button{margin-left:auto;border:0;background:var(--ac);color:var(--onac);border-radius:999px;padding:6px 14px;font-size:13px;flex:none}
+.composer{display:flex;align-items:flex-end;gap:8px;margin:6px 12px 0;padding:5px 5px 5px 16px;border-radius:26px;background:var(--glass2)}
+.composer textarea{flex:1;min-width:0;resize:none;border:0;background:none;outline:0;font-size:16px;line-height:1.45;padding:8px 0;height:39px;max-height:132px}
+.composer textarea::placeholder{color:var(--mut)}
+.send{width:40px;height:40px;flex:none;border:0;border-radius:50%;background:var(--ac);color:var(--onac);display:grid;place-items:center}
+.send:disabled{opacity:.35;cursor:default}
+
+/* ---------- 账本 ---------- */
+.calc{border-radius:22px;margin-top:12px;padding:2px 12px 10px}
+.calh{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 8px}
+.calh b{font-size:15.5px;font-weight:600}
+.calh button{border:0;background:none;color:var(--mut);font-size:13px;display:flex;align-items:center;gap:2px;padding:2px 0}
+.calh button .cico{width:15px;height:15px;transition:transform .2s}
+.calc.open .calh button .cico{transform:rotate(180deg)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal .w{font-size:11px;color:var(--mut);padding:0 0 4px}
+.cal .c{border-radius:13px;padding:5px 0 4px;min-height:46px;cursor:pointer;border:1.5px solid transparent}
+.cal .c:active{background:var(--chip)}
+.cal .c b{display:grid;place-items:center;width:26px;height:26px;margin:0 auto;border-radius:50%;font:600 14px/1 var(--num)}
+.cal .c i{display:block;font:500 10px/1.3 var(--num);font-style:normal;color:var(--ink2);white-space:nowrap;overflow:hidden;margin-top:1px}
+.cal .c i.pos{color:var(--in)}
+.cal .c.off b{color:var(--mut);font-weight:500}
+.cal .c.today b{background:var(--ac);color:var(--onac)}
+.cal .c.sel{border-color:color-mix(in srgb,var(--ac) 45%,transparent);background:var(--chip)}
+.dcard{border-radius:22px;margin-top:12px;overflow:hidden;transition:box-shadow .3s}
+.dcard.flash{box-shadow:0 0 0 2px var(--ac),var(--sh)}
+.dh{display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:14.5px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.18)}
+:root[data-dark] .dh{background:rgba(255,255,255,.03)}
+:root[data-dark] .popc{background:rgba(34,41,54,.95)}
+.dh b{font-weight:600}
+.dh .rel{color:var(--mut);font-size:13px}
+.dh .sp{flex:1}
+.dh .t{font-size:12px;color:var(--mut);white-space:nowrap}
+.dh .t b{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--ink);font-size:14px;margin-left:3px;font-weight:700}
+.dh .t b.in{color:var(--in)}
+.er{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.er:last-child{border-bottom:0}
+.er:active{background:var(--chip)}
+.ei{width:38px;height:38px;border-radius:13px;background:var(--chip);display:grid;place-items:center;color:var(--ink2);flex:none}
+.er .mid{flex:1;min-width:0}
+.et1{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px;min-width:0}
+.et1 .tag{font-size:10.5px;font-weight:500;color:var(--mut);background:var(--chip);border-radius:6px;padding:1px 6px;flex:none}
+.et2{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ea{font-size:16px;flex:none}
+.ea.in{color:var(--in)}
+.er.ph{cursor:default;color:var(--mut);font-size:13.5px;justify-content:center;padding:16px}
+
+/* ---------- 统计 ---------- */
+.srow{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.pnav{margin-left:auto;display:flex;align-items:center;gap:2px;font-size:14px;font-weight:500}
+.pnav button{border:0;background:none;color:var(--mut);width:32px;height:32px;display:grid;place-items:center;border-radius:50%}
+.pnav span{min-width:86px;text-align:center;white-space:nowrap}
+.hnums.three{gap:10px}
+.hnums.three .v{font-size:22px}
+.donut{display:flex;justify-content:center;padding:6px 0 4px}
+.prow{display:flex;align-items:center;gap:10px;padding:8px 2px}
+.prow .pd{width:10px;height:10px;border-radius:4px;flex:none}
+.prow .nm{flex:none;width:76px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .bar{flex:1;height:6px;border-radius:3px;background:var(--chip);overflow:hidden}
+.prow .bar b{display:block;height:100%;border-radius:3px}
+.prow .amt{flex:none;font-size:14px;min-width:66px;text-align:right}
+.prow .pc{flex:none;font-size:11.5px;color:var(--mut);width:34px;text-align:right}
+
+/* ---------- 设置 ---------- */
+.group{border-radius:22px;margin-top:14px;overflow:hidden}
+.gh{font-size:13px;color:var(--mut);padding:13px 16px 2px;font-weight:500}
+.li{display:flex;align-items:center;gap:12px;min-height:50px;padding:5px 16px;border-bottom:1px solid var(--line);position:relative}
+.li:last-child{border-bottom:0}
+.li>.l{flex:none;font-size:15px}
+.li input:not([type=checkbox]):not([type=color]):not([type=time]),.li select{flex:1;min-width:0;width:100%;border:0;background:none;outline:0;text-align:right;font-size:15px;color:var(--ink2);padding:8px 0}
+.li input::placeholder{color:var(--mut);opacity:.8}
+.li select{-webkit-appearance:none;appearance:none;text-align-last:right;padding-right:20px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b95a5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 10l4 4 4-4'/%3E%3C/svg%3E") right center/18px no-repeat}
+.li select option{color:#1d2531}
+.li .unit{flex:none;font-size:15px;color:var(--mut);margin-left:-6px}
+.li .ib{border:0;background:var(--chip);color:var(--ink2);height:30px;min-width:30px;padding:0 10px;border-radius:999px;font-size:12.5px;display:grid;place-items:center;flex:none}
+.li .ib .cico{width:16px;height:16px}
+.li .ib.spin .cico{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.li.col{flex-direction:column;align-items:stretch;gap:8px;padding:12px 16px 14px}
+.li textarea{width:100%;border:0;outline:0;background:var(--chip);border-radius:14px;padding:11px 13px;font-size:14.5px;line-height:1.7;resize:vertical;min-height:120px;color:var(--ink)}
+.li.act{cursor:pointer;justify-content:space-between;font-size:15px}
+.li.act:active{background:var(--chip)}
+.li.act .cico{color:var(--mut);width:16px;height:16px}
+.li.act.danger{color:var(--err)}
+.ghint{font-size:12.5px;color:var(--mut);padding:2px 16px 12px;line-height:1.65}
+.ghint.ok{color:#3f9a6e}.ghint.bad{color:var(--err)}
+:root[data-dark] .ghint.ok{color:#6cc79a}
+.btn{border:0;background:var(--ac);color:var(--onac);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:500;flex:none}
+.sw{position:relative;display:inline-block;flex:none;margin-left:auto}
+.sw input{position:absolute;opacity:0;pointer-events:none}
+.sw i{display:block;width:48px;height:29px;border-radius:999px;background:rgba(120,130,145,.32);position:relative;transition:background .2s}
+.sw i::after{content:'';position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;transition:transform .24s cubic-bezier(.3,.7,.3,1.2);box-shadow:0 2px 5px rgba(0,0,0,.18)}
+.sw input:checked+i{background:var(--ac)}
+.sw input:checked+i::after{transform:translateX(19px)}
+.li input[type=time]{border:0;background:var(--chip);border-radius:10px;padding:6px 10px;font:600 15px var(--num);margin-left:auto;color:var(--ink)}
+.li input[type=color]{width:40px;height:30px;border:0;border-radius:10px;background:none;padding:0;margin-left:auto}
+.sws{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 16px 14px}
+.sws button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--mut);padding:2px;flex:none}
+.sws i{width:100%;max-width:50px;height:34px;border-radius:12px;display:block;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.sws button.on{color:var(--ink)}
+.sws button.on i{outline:2px solid var(--ink);outline-offset:2px}
+.builtin{white-space:pre-wrap;font:12px/1.75 ui-monospace,Menlo,Consolas,monospace;background:var(--chip);border-radius:14px;padding:12px 14px;max-height:340px;overflow:auto;color:var(--ink2);margin:0}
+.foot{text-align:center;font-size:11.5px;color:var(--mut);padding:18px 0 4px}
+
+/* ---------- 记一笔 ---------- */
+.ovl{position:fixed;inset:0;z-index:30;background:rgba(12,16,24,.3);opacity:0;pointer-events:none;transition:opacity .22s}
+.sheet{position:fixed;left:50%;width:min(100%,var(--W));bottom:0;z-index:31;border-radius:28px 28px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 18px);transform:translate(-50%,105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:90dvh;overflow-y:auto;background:var(--glass2);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--gb);border-bottom:0}
+.open .ovl{opacity:1;pointer-events:auto}
+.open .sheet{transform:translate(-50%,0)}
+.grab{width:38px;height:5px;border-radius:3px;background:rgba(120,130,145,.35);margin:0 auto 14px}
+.sh-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sh-top .seg{background:var(--chip)}
+.sh-top .mng{margin-left:auto;border:0;background:none;font-size:13px;color:var(--mut)}
+.amt-in{display:flex;align-items:baseline;gap:6px;padding:6px 2px 10px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.amt-in span{font:600 22px var(--num);color:var(--mut)}
+.amt-in input{flex:1;border:0;outline:0;background:none;font:700 38px/1.2 var(--num);min-width:0;color:var(--ink)}
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:10px 6px;margin-bottom:14px}
+.chip{position:relative;border:0;background:none;padding:0;text-align:center;font-size:12px;color:var(--ink2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
+.chip .ei{width:46px;height:46px;border-radius:16px;transition:background .15s,color .15s}
+.chip .ei .cico{width:21px;height:21px}
+.chip.on{color:var(--ink);font-weight:600}
+.chip.on .ei{background:var(--ac);color:var(--onac)}
+.chip .x{position:absolute;top:-6px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:var(--err);color:#fff;font-size:13px;line-height:1;display:grid;place-items:center}
+.addcat{display:flex;gap:8px;margin-bottom:14px}
+.addcat input{flex:1;min-width:0;border:0;background:var(--chip);border-radius:12px;padding:10px 12px;font-size:16px;outline:0}
+.addcat button{border:0;background:var(--ac);color:var(--onac);border-radius:12px;padding:0 16px;font-size:14px}
+.frow{display:flex;gap:8px;margin-bottom:14px}
+.frow input{border:0;background:var(--chip);border-radius:14px;padding:11px 13px;font-size:16px;outline:0;min-width:0}
+.frow .note{flex:1}
+.frow .date{width:150px;font-family:var(--num)}
+.sh-btns{display:flex;gap:10px;align-items:center}
+.sh-btns .del{border:0;background:none;color:var(--err);font-size:14px;padding:10px 4px}
+.sh-btns .save{flex:1;border:0;background:var(--ac);color:var(--onac);border-radius:999px;padding:14px;font-size:16px;font-weight:600}
+
+/* ---------- 月份选择 ---------- */
+.pop{position:fixed;inset:0;z-index:35;background:rgba(12,16,24,.18)}
+.popc{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 120px);transform:translateX(-50%);width:min(320px,calc(100% - 32px));border-radius:24px;padding:12px 14px 16px;background:rgba(250,251,253,.92);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--gb);box-shadow:0 24px 50px -20px rgba(20,28,40,.4)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px}
+.ph b{font:700 16px var(--num)}
+.ph button{border:0;background:var(--chip);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--ink2)}
+.pm{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pm button{border:0;background:var(--chip);border-radius:14px;padding:10px 0;font-size:14px;color:var(--ink2)}
+.pm button.on{background:var(--ac);color:var(--onac);font-weight:600}
+.pm button.now{box-shadow:inset 0 0 0 1.5px var(--ac)}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-6px);background:rgba(25,31,42,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;font-size:13.5px;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:40;max-width:84vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+svg text{font-family:var(--num)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+html[lang=en] .tabs button{font-size:14px}
+html[lang=en] .tabs button span{padding:8px 10px}
+html[lang=en] .li>.l{font-size:14.5px}
+</style>
+</head>
+<body data-tab="chat">
+<div class="bgfx"></div>
+<div class="app">
+
+<!-- ================= 聊天 Chat ================= -->
+<section class="page on" id="pgChat">
+ <header class="chead">
+  <div class="ava" id="ava">小</div>
+  <div class="who"><b id="aiName">小账</b><span id="aiSub"><i></i></span></div>
+  <button class="bell glass" id="bell" title="每日记账提醒" data-en-tt="Daily reminder"></button>
+ </header>
+ <button class="hero tcard" id="tcard"></button>
+ <div class="msgs" id="msgs"></div>
+ <div class="nokey glass" id="nokey" hidden><span data-en="No API key yet">还没填 API Key</span><button id="goSet" data-en="Set up">去设置</button></div>
+ <div class="composer glass">
+  <textarea id="inp" rows="1" placeholder="今天花了什么？" data-en-ph="What did you spend today?" enterkeyhint="send"></textarea>
+  <button class="send" id="send" aria-label="发送"></button>
+ </div>
+</section>
+
+<!-- ================= 账本 Ledger ================= -->
+<section class="page" id="pgLedger">
+ <header class="top"><h1 data-en="Ledger">账本</h1></header>
+ <div class="hero">
+  <div class="hrow"><button class="hpill" id="mPick"></button><button class="hpill" id="fPick"></button><button class="hlink" id="toStats"></button></div>
+  <div class="hnums">
+   <div><div class="k" data-en="Spent">月支出</div><div class="v num" id="hOut">¥0.00</div></div>
+   <div><div class="k" data-en="Earned">月收入</div><div class="v num in" id="hIn">¥0.00</div></div>
+  </div>
+  <div class="sub" id="hSub"></div>
+ </div>
+ <div class="calc glass" id="calc"><div class="calh"><b data-en="Calendar">收支日历</b><button id="calTog"></button></div><div class="cal" id="cal"></div></div>
+ <div id="days"></div>
+</section>
+
+<!-- ================= 统计 Stats ================= -->
+<section class="page" id="pgStats">
+ <header class="top"><h1 data-en="Stats">统计</h1></header>
+ <div class="srow">
+  <div class="seg glass" id="sSeg"><button data-r="week" data-en="Week">周</button><button data-r="month" class="on" data-en="Month">月</button><button data-r="year" data-en="Year">年</button></div>
+  <div class="pnav"><button id="sPrev" title="上一段" data-en-tt="Previous"></button><span id="sLb"></span><button id="sNext" title="下一段" data-en-tt="Next"></button></div>
+ </div>
+ <div class="hero">
+  <div class="hnums three">
+   <div><div class="k" data-en="Spent">支出</div><div class="v num" id="sOut">¥0</div></div>
+   <div><div class="k" data-en="Earned">收入</div><div class="v num in" id="sIn">¥0</div></div>
+   <div><div class="k" data-en="Balance">结余</div><div class="v num" id="sBal">¥0</div></div>
+  </div>
+  <div class="sub" id="sN"></div>
+ </div>
+ <div class="card glass" id="chartCard" hidden><h3><span data-en="Trend">收支走势</span><span class="mini" id="chSeg"><button data-k="out" class="on" data-en="Spent">支出</button><button data-k="in" data-en="Earned">收入</button></span></h3><div id="chartBox"></div></div>
+ <div class="card glass" id="catCard" hidden><h3><span data-en="By category">分类占比</span><span class="mini" id="catSeg"><button data-k="out" class="on" data-en="Spent">支出</button><button data-k="in" data-en="Earned">收入</button></span></h3><div class="donut" id="donut"></div><div id="catList"></div></div>
+ <div class="card glass" id="topCard" hidden><h3><span data-en="Biggest expenses">大额支出</span></h3><div id="topList" style="margin:0 -16px -14px"></div></div>
+ <div class="card glass" id="statEmpty" hidden><div class="empty" data-en="Nothing recorded in this period">这段时间还没有记录</div></div>
+</section>
+
+<!-- ================= 设置 Settings ================= -->
+<section class="page" id="pgSet">
+ <header class="top"><h1 data-en="Settings">设置</h1></header>
+
+ <div class="group glass">
+  <div class="li"><span class="l">语言 / Language</span><div class="seg" id="sLang" style="margin-left:auto;background:var(--chip)"><button data-l="zh">中文</button><button data-l="en">English</button></div></div>
+ </div>
+
+ <div class="group glass">
+  <div class="gh" data-en="Model API">模型接口</div>
+  <label class="li"><span class="l" data-en="Provider">平台</span><select id="sPreset"></select></label>
+  <label class="li"><span class="l" data-en="Base URL">接口地址</span><input id="sBase" placeholder="https://..." autocomplete="off" spellcheck="false"></label>
+  <div class="li"><span class="l">API Key</span><input id="sKey" type="password" placeholder="粘贴你的 key" data-en-ph="Paste your key" autocomplete="off" spellcheck="false"><button class="ib" id="sEye" type="button"></button></div>
+  <div class="li"><span class="l" data-en="Model">模型</span><select id="sModel"></select><button class="ib" id="sFetch" type="button" title="重新拉取模型列表" data-en-tt="Reload model list"></button></div>
+  <label class="li" id="sCustomRow" hidden><span class="l" data-en="Model name">模型名</span><input id="sModelTxt" placeholder="手动填写模型名" data-en-ph="Type a model name" autocomplete="off" spellcheck="false"></label>
+  <div class="ghint" id="sModelHint"></div>
+  <div class="li"><span class="l" data-en="Streaming">流式输出</span><label class="sw"><input type="checkbox" id="sStream"><i></i></label></div>
+  <div class="li"><span class="l" data-en="Context">上下文</span><input id="sCtx" type="number" inputmode="numeric" min="2" max="200" step="1"><span class="unit" data-en="msgs">条</span></div>
+  <div class="ghint" data-en="The AI only remembers this many recent messages and forgets older ones. Fewer messages, fewer tokens. Your ledger data is always included.">AI 只记得最近这么多条聊天，更早的会忘掉，条数越少越省 token。账本数据每次都会带给它，不受影响。</div>
+  <div class="li"><button class="btn" id="sTest" type="button" data-en="Test connection">测试连接</button><span class="ghint" id="sTestOut" style="padding:0;flex:1"></span></div>
+ </div>
+ <p class="ghint" style="padding:8px 16px 0" data-en="Your key stays in this browser and is only sent to the base URL above.">Key 只保存在这台设备的浏览器里，只会发给上面的接口地址。</p>
+
+ <div class="group glass">
+  <div class="gh" data-en="AI persona">AI 人设</div>
+  <label class="li"><span class="l" data-en="Name">名字</span><input id="sName" maxlength="12"></label>
+  <label class="li"><span class="l" data-en="Call me">怎么称呼你</span><input id="sCall" maxlength="12" placeholder="可不填" data-en-ph="Optional"></label>
+  <div class="li col"><span class="l" data-en="Persona">人设</span><textarea id="sPersona" rows="6"></textarea></div>
+  <div class="li act" id="sBuiltinBtn"><span data-en="View built-in rules">查看内置记账规则</span><span id="sBuiltinArrow"></span></div>
+  <div class="li col" id="sBuiltinWrap" hidden><pre class="builtin" id="sBuiltin"></pre></div>
+  <div class="li act" id="sPReset"><span data-en="Reset persona">恢复默认人设</span><span class="arr"></span></div>
+ </div>
+
+ <div class="group glass">
+  <div class="gh" data-en="Daily reminder">每日提醒</div>
+  <div class="li"><span class="l" data-en="Remind me every day">每天提醒我记账</span><label class="sw"><input type="checkbox" id="sRemOn"><i></i></label></div>
+  <div class="li"><span class="l" data-en="Time">提醒时间</span><input type="time" id="sRemTime"></div>
+  <div class="li act" id="sNotif"><span id="sNotifTxt"></span><span class="arr"></span></div>
+  <div class="li act" id="sRemTry"><span data-en="Try it now">现在试一下提醒</span><span class="arr"></span></div>
+ </div>
+ <p class="ghint" style="padding:8px 16px 0" data-en="If nothing is logged by then, the AI reminds you in Chat. If the page is closed, it catches up the next time you open it that day.">到点时如果今天还没记账，AI 会在聊天里主动提醒；页面关着时会在下次打开时补上。</p>
+
+ <div class="group glass">
+  <div class="gh" data-en="Appearance">外观</div>
+  <div class="sws" id="sSw"></div>
+  <div class="li"><span class="l" data-en="Custom color">自定义颜色</span><input type="color" id="sColor"></div>
+  <div class="li"><span class="l" data-en="Mode">深浅色</span><div class="seg" id="sMode" style="margin-left:auto;background:var(--chip)"><button data-m="auto" data-en="Auto">自动</button><button data-m="light" data-en="Light">浅色</button><button data-m="dark" data-en="Dark">深色</button></div></div>
+ </div>
+
+ <div class="group glass" id="appGroup">
+  <div class="gh" data-en="App">应用</div>
+  <div class="li act" id="sInstall"><span id="sInstallTxt"></span><span class="arr"></span></div>
+  <div class="ghint" id="sInstallHint"></div>
+ </div>
+
+ <div class="group glass">
+  <div class="gh" data-en="Data">数据</div>
+  <div class="li act" id="dExp"><span data-en="Export backup">导出备份</span><span class="arr"></span></div>
+  <div class="li act" id="dImp"><span data-en="Import backup">导入备份</span><span class="arr"></span></div>
+  <div class="li act" id="dCsv"><span data-en="Export spreadsheet (CSV)">导出表格（CSV）</span><span class="arr"></span></div>
+  <div class="li act" id="dDemo"><span data-en="Add sample entries">填入示例账目</span><span class="arr"></span></div>
+  <div class="li act danger" id="dChat"><span data-en="Clear chat history">清空聊天记录</span><span class="arr"></span></div>
+  <div class="li act danger" id="dAll"><span data-en="Erase all data">清空全部数据</span><span class="arr"></span></div>
+  <input type="file" id="dFile" accept=".json,application/json" hidden>
+ </div>
+ <p class="ghint" style="padding:8px 16px 0" data-en="Entries live only in this browser. Export a backup before switching devices or clearing browser data. Backups never include your API key.">账目只存在这个浏览器里，换设备或清理浏览器前记得导出备份。备份里不含 API Key。</p>
+ <p class="foot" id="foot"></p>
+</section>
+
+<nav class="tabs glass" id="tabs">
+ <button data-t="chat" class="on"><span data-en="Chat">聊天</span><i class="dot"></i></button>
+ <button data-t="ledger"><span data-en="Ledger">账本</span></button>
+ <button class="plus" id="plus" title="记一笔" data-en-tt="Add entry"><span></span></button>
+ <button data-t="stats"><span data-en="Stats">统计</span></button>
+ <button data-t="set"><span data-en="Settings">设置</span></button>
+</nav>
+
+<div class="ovl" id="ovl"></div>
+<div class="sheet" id="sheet">
+ <div class="grab"></div>
+ <div class="sh-top">
+  <div class="seg" id="tSeg"><button data-t="out" class="on" data-en="Expense">支出</button><button data-t="in" data-en="Income">收入</button></div>
+  <button class="mng" id="mngBtn"></button>
+ </div>
+ <div class="amt-in"><span>¥</span><input id="fAmt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div>
+ <div class="chips" id="chips"></div>
+ <div class="addcat" id="addcat" hidden><input id="acSym" placeholder="☆" maxlength="4" style="flex:0 0 58px;text-align:center"><input id="acNm" placeholder="新分类名（最多 8 个字）" data-en-ph="New category (max 8 chars)" maxlength="8"><button id="acGo" data-en="Add">添加</button></div>
+ <div class="frow"><input class="note" id="fNote" placeholder="备注" data-en-ph="Note" maxlength="120"><input class="date" id="fDate" type="date"></div>
+ <div class="sh-btns"><button class="del" id="fDel" hidden data-en="Delete">删除</button><button class="save" id="fSave"></button></div>
+</div>
+<div class="pop" id="mpop" hidden><div class="popc"><div class="ph"><button id="pyPrev"></button><b id="pyLb"></b><button id="pyNext"></button></div><div class="pm" id="pm"></div></div></div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   小账 Tally · 纯前端 AI 记账 / client-side AI ledger   v0.5 (中文 / English)
+   - 数据全在 localStorage (xz.entries / xz.cats / xz.chat / xz.settings)
+   - 模型: 任何 OpenAI 兼容接口, 浏览器直连; 填 key 后自动 GET /models 拉列表
+   - AI 通过 ledger 工具 (view / add / edit / delete) 读写账本
+   - 双语: tr(中文, English) 就地切换; 静态文字用 data-en / data-en-ph / data-en-tt
+   ===================================================================== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const MEM={};
+const LS={
+ get(k,d){try{const v=localStorage.getItem('xz.'+k);if(v!=null)return JSON.parse(v)}catch(e){}return k in MEM?MEM[k]:d},
+ set(k,v){MEM[k]=v;try{localStorage.setItem('xz.'+k,JSON.stringify(v))}catch(e){}},
+ del(k){delete MEM[k];try{localStorage.removeItem('xz.'+k)}catch(e){}}};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const pad2=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const hm=d=>pad2(d.getHours())+':'+pad2(d.getMinutes());
+const pd=s=>new Date(s+'T12:00:00');
+const todayIso=()=>iso(new Date());
+const uid=()=>Date.now().toString(36).slice(-6)+Math.random().toString(36).slice(2,6);
+const r2=x=>Math.round((+x||0)*100)/100;
+const fmt=n=>r2(n).toLocaleString('en-US',{maximumFractionDigits:2});
+const fmt2=n=>r2(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const yen=n=>'¥'+fmt(n);
+
+/* ---------------- 语言 ---------------- */
+let LANG='zh';
+const tr=(zh,en)=>LANG==='en'?en:zh;
+const WD='日一二三四五六',WD_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONL_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const wday=d=>tr('周'+WD[d.getDay()],WD_EN[d.getDay()]);
+const md2=d=>tr((d.getMonth()+1)+'月'+d.getDate()+'日',MON_EN[d.getMonth()]+' '+d.getDate());
+function relDay(ds){if(ds===todayIso())return tr('今天','Today');const y=new Date();y.setDate(y.getDate()-1);if(ds===iso(y))return tr('昨天','Yesterday');return md2(pd(ds))}
+function cellNum(n){const a=Math.abs(n);if(a>=10000)return tr((a/10000).toFixed(1)+'万',(a/1000).toFixed(0)+'k');if(a>=1000||Number.isInteger(a))return String(Math.round(a));return a.toFixed(1)}
+function applyStatic(){
+ document.documentElement.lang=LANG==='en'?'en':'zh-CN';
+ $$('[data-en]').forEach(el=>{if(el.dataset.zh==null)el.dataset.zh=el.textContent;el.textContent=LANG==='en'?el.dataset.en:el.dataset.zh});
+ $$('[data-en-ph]').forEach(el=>{if(el.dataset.zhPh==null)el.dataset.zhPh=el.getAttribute('placeholder')||'';el.setAttribute('placeholder',LANG==='en'?el.dataset.enPh:el.dataset.zhPh)});
+ $$('[data-en-tt]').forEach(el=>{if(el.dataset.zhTt==null)el.dataset.zhTt=el.getAttribute('title')||'';const v=LANG==='en'?el.dataset.enTt:el.dataset.zhTt;el.setAttribute('title',v);el.setAttribute('aria-label',v)});
+ document.title=tr('小账 · AI 记账','Tally · AI Ledger');
+ $('#foot').textContent=tr('小账 · AI 记账 · v0.5','Tally · AI Ledger · v0.5')}
+
+let toastT;function toast(s){const t=$('#toast');t.textContent=s;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2100)}
+const SV=(p,sw)=>'<svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.7)+'" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+const IC={
+ bell:'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15L6 16.5z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+ belloff:'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15L6 16.5z"/><path d="M10 20.5a2 2 0 0 0 4 0"/><path d="M4 4l16 16"/>',
+ up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+ stop:'<rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor" stroke="none"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ down:'<path d="M7 10l5 5 5-5"/>',
+ right:'<path d="M10 7l5 5-5 5"/>',
+ left:'<path d="M14 7l-5 5 5 5"/>',
+ look:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+ refresh:'<path d="M20 11a8 8 0 0 0-14.5-4.5M4 13a8 8 0 0 0 14.5 4.5"/><path d="M5 3v4h4M19 21v-4h-4"/>'};
+
+/* ---------------- 设置 ---------------- */
+const PRESETS={
+ deepseek:{n:'DeepSeek',e:'DeepSeek',base:'https://api.deepseek.com',models:['deepseek-flash','deepseek-chat','deepseek-v4-pro']},
+ qwen:{n:'通义千问（阿里云百炼）',e:'Qwen (Alibaba Cloud)',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',models:['qwen-plus','qwen-flash','qwen-turbo','qwen-max']},
+ kimi:{n:'Kimi（月之暗面）',e:'Kimi (Moonshot)',base:'https://api.moonshot.cn/v1',models:['kimi-k2-turbo-preview','kimi-latest','moonshot-v1-8k']},
+ glm:{n:'智谱 GLM',e:'Zhipu GLM',base:'https://open.bigmodel.cn/api/paas/v4',models:['glm-4-flash','glm-4.5-flash','glm-4.5','glm-4-plus']},
+ silicon:{n:'硅基流动',e:'SiliconFlow',base:'https://api.siliconflow.cn/v1',models:['deepseek-ai/DeepSeek-V3','Qwen/Qwen2.5-72B-Instruct']},
+ openrouter:{n:'OpenRouter',e:'OpenRouter',base:'https://openrouter.ai/api/v1',models:['deepseek/deepseek-chat','openai/gpt-4o-mini']},
+ openai:{n:'OpenAI',e:'OpenAI',base:'https://api.openai.com/v1',models:['gpt-4o-mini','gpt-4.1-mini','gpt-5-mini']},
+ custom:{n:'其他（兼容 OpenAI 格式）',e:'Other (OpenAI-compatible)',base:'',models:[]}};
+const THEMES={
+ slate:{n:'雾蓝',e:'Slate',h1:'#394557',h2:'#5d6b82',bg1:'#e8ecf2',bg2:'#d3dae6',b1:'rgba(140,160,195,.45)',b2:'rgba(196,200,226,.55)'},
+ ink:{n:'墨黑',e:'Ink',h1:'#1c1f25',h2:'#3c4049',bg1:'#ececee',bg2:'#d8d9dd',b1:'rgba(150,152,165,.35)',b2:'rgba(206,207,216,.5)'},
+ sage:{n:'灰绿',e:'Sage',h1:'#374a41',h2:'#5f7468',bg1:'#e8eeea',bg2:'#d2dcd5',b1:'rgba(140,175,150,.42)',b2:'rgba(205,218,192,.55)'},
+ dusk:{n:'暮紫',e:'Dusk',h1:'#433c5a',h2:'#6c6388',bg1:'#ece9f2',bg2:'#d9d3e6',b1:'rgba(165,145,205,.4)',b2:'rgba(218,192,222,.52)'},
+ latte:{n:'奶茶',e:'Latte',h1:'#56473c',h2:'#887161',bg1:'#f1ece6',bg2:'#e1d8cc',b1:'rgba(205,172,140,.42)',b2:'rgba(228,206,186,.55)'},
+ rose:{n:'雾粉',e:'Rose',h1:'#5a4047',h2:'#8a6570',bg1:'#f2eaec',bg2:'#e3d5da',b1:'rgba(212,160,176,.42)',b2:'rgba(232,200,206,.52)'}};
+const DEF_PERSONA_ZH='你性格温和、有一点点俏皮，说话简短自然，像一个靠谱又贴心的朋友。\n用户记账勤快的时候会顺口夸一句；看到大额支出不评判、不说教，只是帮忙记清楚。\n偶尔关心一下用户今天过得怎么样，但不啰嗦。';
+const DEF_PERSONA_EN="You're warm and a little playful, and you keep things short and natural, like a reliable, thoughtful friend.\nWhen the user keeps up with logging, give them a quick compliment; when they spend big, don't judge or lecture, just log it clearly.\nNow and then, ask how their day is going, briefly.";
+const DEF_SET={lang:'',api:{preset:'deepseek',base:PRESETS.deepseek.base,key:'',model:'deepseek-flash',stream:true,models:[],modelsFor:''},
+ ai:{name:'',persona:''},user:{call:''},chat:{ctx:30},remind:{on:true,time:'21:00'},theme:{name:'slate',custom:'',mode:'auto'}};
+function mergeSet(s){const o=clone(DEF_SET);if(s&&typeof s==='object'){for(const k in o)if(s[k]&&typeof s[k]==='object')Object.assign(o[k],s[k]);if(typeof s.lang==='string')o.lang=s.lang}
+ if(!THEMES[o.theme.name])o.theme.name='slate';if(!PRESETS[o.api.preset])o.api.preset='custom';if(!Array.isArray(o.api.models))o.api.models=[];
+ /* 旧版本存的是写死的默认值, 换成"空 = 跟随语言的默认" */
+ if(o.ai.name==='小账'||o.ai.name==='Tally')o.ai.name='';
+ if(o.ai.persona===DEF_PERSONA_ZH||o.ai.persona===DEF_PERSONA_EN)o.ai.persona='';
+ return o}
+let SET=mergeSet(LS.get('settings',{}));
+function saveSet(){LS.set('settings',SET)}
+LANG=SET.lang==='en'||SET.lang==='zh'?SET.lang:(/^zh/i.test(navigator.language||'zh')?'zh':'en');
+const ready=()=>!!(SET.api.base&&SET.api.model&&(SET.api.key||SET.api.preset==='custom'));
+const aiName=()=>(SET.ai.name||'').trim()||tr('小账','Tally');
+const persona=()=>(SET.ai.persona||'').trim()||tr(DEF_PERSONA_ZH,DEF_PERSONA_EN);
+const ctxN=()=>{const n=Math.round(+SET.chat.ctx);return isFinite(n)?Math.min(200,Math.max(2,n)):30};
+
+/* ---------------- 账本数据 ---------------- */
+const DEFAULT_CATS={
+ out:[['🍜','餐饮'],['🚌','交通'],['🛍','购物'],['🧴','日用'],['🏠','住房'],['🎮','娱乐'],['💊','医疗'],['📚','学习'],['🎁','人情'],['✨','其他']],
+ in:[['💰','工资'],['💼','兼职'],['📈','理财'],['🧧','红包'],['✨','其他']]};
+const DEF_NAMES={out:new Set(DEFAULT_CATS.out.map(x=>x[1])),in:new Set(DEFAULT_CATS.in.map(x=>x[1]))};
+const CAT_EN={'餐饮':'Food','交通':'Transport','购物':'Shopping','日用':'Daily','住房':'Housing','娱乐':'Fun','医疗':'Health','学习':'Study','人情':'Gifts','其他':'Other','工资':'Salary','兼职':'Side job','理财':'Investing','红包':'Red packet'};
+/* 默认分类在库里存中文名, 英文界面只换显示; 自定义分类原样显示 */
+const catLabel=(kind,name)=>LANG==='en'&&DEF_NAMES[kind]&&DEF_NAMES[kind].has(name)&&CAT_EN[name]?CAT_EN[name]:name;
+function catResolve(kind,input){const s=String(input||'').trim().slice(0,16);if(!s)return '';const list=(CATS[kind]||[]).map(x=>x[1]);if(list.includes(s))return s;
+ const lo=s.toLowerCase(),hit=list.find(n=>DEF_NAMES[kind].has(n)&&CAT_EN[n]&&CAT_EN[n].toLowerCase()===lo);return hit||s}
+let ENT=LS.get('entries',[]);if(!Array.isArray(ENT))ENT=[];
+let CATS=LS.get('cats',null);if(!CATS||!Array.isArray(CATS.out)||!Array.isArray(CATS.in))CATS=clone(DEFAULT_CATS);
+let CHAT=LS.get('chat',[]);if(!Array.isArray(CHAT))CHAT=[];
+function saveEnt(){LS.set('entries',ENT);onData()}
+function saveCats(){LS.set('cats',CATS)}
+function saveChat(){if(CHAT.length>400)CHAT=CHAT.slice(-400);LS.set('chat',CHAT)}
+
+function parseDate(s){
+ s=String(s||'').trim();if(!s)return pd(todayIso());
+ const m=s.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/);if(!m)throw new Error(tr('日期要写成 YYYY-MM-DD','Dates must look like YYYY-MM-DD'));
+ const y=+m[1],mo=+m[2],d=+(m[3]||1),dt=new Date(y,mo-1,d,12);
+ if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)throw new Error(tr('没有这一天','That date does not exist'));return dt}
+function span(rng,b){
+ const y=b.getFullYear(),m=b.getMonth();
+ if(rng==='day')return [b,b,tr(y+'年'+(m+1)+'月'+b.getDate()+'日 周'+WD[b.getDay()],WD_EN[b.getDay()]+', '+MON_EN[m]+' '+b.getDate()+', '+y)];
+ if(rng==='week'){const a=new Date(b);a.setDate(b.getDate()-(b.getDay()+6)%7);const e=new Date(a);e.setDate(a.getDate()+6);
+  return [a,e,tr((a.getMonth()+1)+'.'+a.getDate()+' – '+(e.getMonth()+1)+'.'+e.getDate(),MON_EN[a.getMonth()]+' '+a.getDate()+' – '+MON_EN[e.getMonth()]+' '+e.getDate())]}
+ if(rng==='year')return [new Date(y,0,1,12),new Date(y,11,31,12),tr(y+'年',String(y))];
+ return [new Date(y,m,1,12),new Date(y,m+1,0,12),tr(y+'年'+(m+1)+'月',MON_EN[m]+' '+y)]}
+function summarize(rng,dateS){
+ const base=parseDate(dateS),[a,b,label]=span(rng,base),A=iso(a),B=iso(b);
+ const rows=ENT.filter(e=>e.date>=A&&e.date<=B);
+ const tot={out:0,in:0},bc={out:{},in:{}};
+ for(const e of rows){tot[e.type]+=e.amount;const g=bc[e.type][e.category]||(bc[e.type][e.category]={category:e.category,sum:0,n:0});g.sum+=e.amount;g.n++}
+ const cats=k=>Object.values(bc[k]).map(g=>({category:g.category,sum:r2(g.sum),n:g.n})).sort((x,y)=>y.sum-x.sum);
+ const out={range:rng,start:A,end:B,label,date:iso(base),out_total:r2(tot.out),in_total:r2(tot.in),balance:r2(tot.in-tot.out),count:rows.length,by_cat:{out:cats('out'),in:cats('in')}};
+ if(rng==='day'){out.entries=rows.slice().sort((x,y)=>(y.dt+y.created).localeCompare(x.dt+x.created));return out}
+ const daily={};for(const e of rows){const d=daily[e.date]||(daily[e.date]={o:0,i:0});if(e.type==='out')d.o+=e.amount;else d.i+=e.amount}
+ const series=[];
+ if(rng==='year'){for(let m=1;m<=12;m++){const k=base.getFullYear()+'-'+pad2(m);let o=0,i=0;for(const d in daily)if(d.startsWith(k)){o+=daily[d].o;i+=daily[d].i}series.push({k,label:tr(m+'月',MON_EN[m-1]),out:r2(o),in:r2(i)})}}
+ else{const cur=new Date(a);while(iso(cur)<=B){const k=iso(cur),d=daily[k]||{o:0,i:0};series.push({k,label:rng==='week'?wday(cur):String(cur.getDate()),out:r2(d.o),in:r2(d.i)});cur.setDate(cur.getDate()+1)}}
+ out.series=series;
+ out.top=rows.filter(e=>e.type==='out').sort((x,y)=>y.amount-x.amount).slice(0,8);
+ out.top_in=rows.filter(e=>e.type==='in').sort((x,y)=>y.amount-x.amount).slice(0,6);
+ return out}
+function checkAmt(amount){const v=parseFloat(amount);if(!isFinite(v))throw new Error(tr('金额看不懂','Amount not understood'));const amt=r2(v);if(!(amt>0&&amt<=1e7))throw new Error(tr('金额得是 0 到一千万之间的数','Amount must be between 0 and 10,000,000'));return amt}
+function addEntry(typ,amount,category,note,dateS,timeS,source){
+ typ=typ==='in'?'in':'out';const amt=checkAmt(amount);
+ category=String(category||'其他').trim().slice(0,16)||'其他';note=String(note||'').trim().slice(0,120);
+ const ds=iso(parseDate(dateS));let tm=String(timeS||'').trim();
+ if(!/^\d{2}:\d{2}$/.test(tm))tm=ds===todayIso()?hm(new Date()):'12:00';
+ const row={id:uid(),dt:ds+' '+tm,date:ds,type:typ,amount:amt,category,note,source:source==='ai'?'ai':'user',created:new Date().toISOString()};
+ ENT.push(row);saveEnt();return row}
+function editEntry(id,b){const e=ENT.find(x=>x.id===id);if(!e)throw new Error(tr('没有这一笔','Entry not found'));
+ const amt=checkAmt(b.amount),ds=iso(parseDate(b.date||e.date));
+ Object.assign(e,{type:b.type==='in'?'in':'out',amount:amt,category:String(b.category||e.category).trim().slice(0,16),note:String(b.note||'').trim().slice(0,120),date:ds,dt:ds+' '+(e.dt.slice(11,16)||'12:00')});saveEnt();return e}
+function delEntry(id){const n=ENT.length;ENT=ENT.filter(x=>x.id!==id);if(ENT.length===n)return false;saveEnt();return true}
+function catAdd(kind,name,sym){name=String(name||'').trim().slice(0,8);if(!name)throw new Error(tr('先写个分类名','Type a category name first'));
+ if(CATS[kind].some(x=>x[1]===name||catLabel(kind,x[1])===name))throw new Error(tr('已经有这个分类了','That category already exists'));
+ const arr=CATS[kind],pos=arr.length&&arr[arr.length-1][1]==='其他'?arr.length-1:arr.length;arr.splice(pos,0,[String(sym||'').trim().slice(0,4)||'✨',name]);saveCats()}
+function catDel(kind,name){if(name==='其他')throw new Error(tr('「其他」是兜底分类，留着吧','"Other" is the fallback category and has to stay'));CATS[kind]=CATS[kind].filter(x=>x[1]!==name);saveCats()}
+
+/* ---- 分类图标: 默认分类是线条图标, 自定义分类用用户给的符号 ---- */
+const ICO={
+'餐饮':'<path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 7c0-1 .8-1.4.8-2.5M13 7c0-1 .8-1.4.8-2.5"/>',
+'交通':'<rect x="5" y="4" width="14" height="13" rx="2.5"/><path d="M5 10h14"/><path d="M8.2 19.8h.01M15.8 19.8h.01"/>',
+'购物':'<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+'日用':'<path d="M10 3h4v3l1.5 2v11a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 8.5 19V8L10 6V3z"/><path d="M8.5 12.5h7"/>',
+'住房':'<path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9.5h11V10"/><path d="M10 19.5v-5h4v5"/>',
+'娱乐':'<rect x="3.5" y="7" width="17" height="10" rx="4"/><path d="M8 10.5v3M6.5 12h3"/><path d="M15.4 11h.01M17.4 13h.01"/>',
+'医疗':'<rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/>',
+'学习':'<path d="M12 6.4C10.5 4.9 8 4.4 5 4.4v13.2c3 0 5.5.5 7 2 1.5-1.5 4-2 7-2V4.4c-3 0-5.5.5-7 2z"/><path d="M12 6.4v13.2"/>',
+'人情':'<rect x="4.5" y="9" width="15" height="11" rx="2"/><path d="M4.5 12.5h15M12 9v11"/><path d="M12 9c-3.8 0-4.6-4.3-1.5-4.3 1.5 0 1.5 4.3 1.5 4.3zm0 0c3.8 0 4.6-4.3 1.5-4.3-1.5 0-1.5 4.3-1.5 4.3z"/>',
+'其他':'<path d="M12 4l1.8 5.4L19 12l-5.2 2.6L12 20l-1.8-5.4L5 12l5.2-2.6L12 4z"/>',
+'工资':'<circle cx="12" cy="12" r="7.5"/><path d="M9.2 9l2.8 3 2.8-3M12 12v4M9.8 13.8h4.4"/>',
+'兼职':'<rect x="4" y="8" width="16" height="11" rx="2"/><path d="M9.5 8V6.5A1.5 1.5 0 0 1 11 5h2a1.5 1.5 0 0 1 1.5 1.5V8M4 12.5h16"/>',
+'理财':'<path d="M4 19.5h16"/><path d="M5.5 15.5l4-4.5 3.5 3 5-6"/><path d="M15 8h3v3"/>',
+'红包':'<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M6 8c2 1.4 4 2.1 6 2.1S16 9.4 18 8"/><path d="M12 13.2h.01"/>'};
+function ico(kind,name){
+ if(ICO[name]&&DEF_NAMES[kind]&&DEF_NAMES[kind].has(name))return SV(ICO[name]);
+ const f=(CATS[kind]||[]).find(x=>x[1]===name);const sym=f&&f[0]&&f[0]!=='✨'?f[0]:'';
+ return sym?'<span class="cico tico">'+esc(sym)+'</span>':SV(ICO['其他'])}
+
+/* =====================================================================
+   AI 这一侧: 工具、上下文、内置规则 (两种语言)
+   ===================================================================== */
+const sgnAmt=e=>(e.type==='in'?'+':'-')+'¥'+fmt(e.amount);
+function brief(e){return (e.dt||'').slice(11,16)+' '+catLabel(e.type,e.category)+(e.note?'·'+e.note:'')+' '+sgnAmt(e)+(e.source==='ai'?tr('(你记)','(you)'):tr('(用户记)','(user)'))}
+const EDIT_WIN=48*3600*1000;
+const snap=e=>({id:e.id,dt:e.dt,date:e.date,type:e.type,amount:e.amount,category:e.category,note:e.note,source:e.source,created:e.created});
+const desc=e=>e.date.slice(5)+' '+catLabel(e.type,e.category)+(e.note?'·'+e.note:'')+' '+sgnAmt(e);
+const editable=e=>e&&e.source==='ai'&&Date.now()-Date.parse(e.created||0)<EDIT_WIN;
+function recentLine(){
+ const list=ENT.filter(editable).sort((x,y)=>String(y.created).localeCompare(String(x.created))).slice(0,12);
+ if(!list.length)return tr('你最近 48 小时没记过账（没有能用 edit/delete 改的）。','You have not recorded anything in the last 48 hours (nothing you can edit or delete).');
+ return tr('你最近 48 小时记的账，最新的在前（可以用 edit/delete 改删）：','Entries you recorded in the last 48 hours, newest first (you can edit/delete these): ')+list.map(e=>'#'+e.id+' '+desc(e)).join(' · ')}
+function catsLine(){
+ const names=k=>(CATS[k]||[]).map(x=>catLabel(k,x[1])+(DEF_NAMES[k].has(x[1])?'':'*')).join(tr('、',', '));
+ return tr('账本分类 支出: '+names('out')+' · 收入: '+names('in')+'（带*的是用户自己加的，意思对得上就优先用；清单外的分类记不进去）',
+  'Ledger categories — expense: '+names('out')+' · income: '+names('in')+' (* = added by the user, prefer it when it fits; anything not on this list is rejected)')}
+function totTxt(s){return tr('支出 ¥'+fmt(s.out_total)+(s.in_total?' / 收入 ¥'+fmt(s.in_total):''),'spent ¥'+fmt(s.out_total)+(s.in_total?' / earned ¥'+fmt(s.in_total):''))}
+function todayLine(){
+ const s=summarize('day',todayIso()),y0=new Date();y0.setDate(y0.getDate()-1);const y=summarize('day',iso(y0));
+ const parts=[];
+ if(s.count)parts.push(tr('今天已记 '+s.count+' 笔（','Logged today: '+s.count+' entries (')+totTxt(s)+tr('）：','): ')+s.entries.slice(0,10).map(brief).join(' · ')+(s.count>10?tr(' …还有 '+(s.count-10)+' 笔',' …and '+(s.count-10)+' more'):''));
+ else parts.push(tr('今天还没记账','Nothing logged today yet'));
+ if(y.count){let yl=tr('昨天记了 '+y.count+' 笔（','Yesterday: '+y.count+' entries (')+totTxt(y)+tr('）',')');
+  if(new Date().getHours()<6)yl+=tr('：',': ')+y.entries.slice(0,10).map(brief).join(' · ');parts.push(yl)}
+ return parts.join(tr('；','; '))+tr('。','.')+'\n'+catsLine()}
+function dayLines(ds){const s=summarize('day',ds);if(!s.count)return tr(ds+' 这天目前一笔都没有。',ds+' has no entries yet.');
+ return tr(ds+' 这天目前 '+s.count+' 笔（支出 ¥'+fmt(s.out_total)+' / 收入 ¥'+fmt(s.in_total)+'）：',ds+' now has '+s.count+' entries (spent ¥'+fmt(s.out_total)+' / earned ¥'+fmt(s.in_total)+'): ')+s.entries.slice(0,12).map(brief).join(' · ')}
+function combo(arr,k,target){const pick=[];function go(st,sum){if(pick.length===k)return Math.abs(sum-target)<.005?pick.slice():null;
+ for(let i=st;i<arr.length;i++){pick.push(arr[i]);const r=go(i+1,sum+arr[i].amount);pick.pop();if(r)return r}return null}return go(0,0)}
+/* 防重复: 前后一天里同类型同金额('same'); 或同一天同分类几笔加起来正好等于它('sum') */
+function dupes(typ,amount,category,ds){
+ const amt=r2(parseFloat(amount));if(!isFinite(amt))return [[],''];
+ const b=pd(ds),lo=new Date(b),hi=new Date(b);lo.setDate(b.getDate()-1);hi.setDate(b.getDate()+1);const L=iso(lo),H=iso(hi);
+ const rows=ENT.filter(e=>e.type===typ&&e.date>=L&&e.date<=H).sort((x,y)=>y.dt.localeCompare(x.dt));
+ const exact=rows.filter(e=>Math.abs(e.amount-amt)<.005);if(exact.length)return [exact,'same'];
+ const cat=String(category||'').trim();
+ if(cat)for(const dd of [...new Set(rows.map(r=>r.date))].sort().reverse()){
+  const same=rows.filter(r=>r.date===dd&&r.category===cat).slice(0,12);
+  for(let k=2;k<=same.length;k++){const hit=combo(same,k,amt);if(hit)return [hit,'sum']}}
+ return [[],'']}
+
+function toolDef(){return {type:'function',function:{name:'ledger',
+ description:tr('记账本工具。action=view 查账：range 取 day/week/month/year，date 可选（YYYY-MM-DD，缺省为今天所在的那一段），返回收支合计、分类、大额和走势。action=add 记一笔：type 支出 out / 收入 in；amount 金额（元，只填数字）；category 必须是账本当前分类之一（清单在系统提示「当前情况」里，清单外的会被退回）；note 一句备注；date 可选，补记过去的日子时填 YYYY-MM-DD。add 遇到前后一天内同类型同金额的账会先拦下并把已有的账列给你看，确认确实是另一笔时再带 force=true 重新调用。action=edit 改一笔：传 id，再传要改的字段（type/amount/category/note/date，没传的保持原样）。action=delete 删一笔：传 id。edit 和 delete 只能动你自己最近 48 小时内记的账，编号列在「当前情况」里；用户手动记的账你改不了。',
+  'Ledger tool. action=view checks the books: range is day/week/month/year, date is optional (YYYY-MM-DD, defaults to the period containing today); returns totals, categories, biggest items and the trend. action=add records one entry: type out (expense) / in (income); amount in yuan, number only; category must be one of the current categories (listed under "Current status" in the system prompt; anything else is rejected); note is a short note; date is optional, YYYY-MM-DD for past days. If an entry with the same type and amount exists within a day either side, add stops and shows you the existing ones; call again with force=true only if it really is a separate entry. action=edit changes one entry: pass id plus the fields to change (type/amount/category/note/date; the rest stay the same). action=delete removes one entry: pass id. edit and delete only work on entries you recorded in the last 48 hours (ids are listed under "Current status"); you cannot change entries the user added by hand.'),
+ parameters:{type:'object',properties:{
+  action:{type:'string',enum:['view','add','edit','delete']},
+  id:{type:'string',description:tr('edit/delete 时那笔账的编号（「当前情况」里 # 后面那串）','For edit/delete: the entry id (the string after # under "Current status")')},
+  range:{type:'string',enum:['day','week','month','year']},
+  date:{type:'string',description:'YYYY-MM-DD'},
+  type:{type:'string',enum:['out','in']},
+  amount:{type:'number'},
+  category:{type:'string'},
+  note:{type:'string'},
+  force:{type:'boolean',description:tr('add 被判为疑似重复后，确认确实是另一笔时才传 true','Only pass true after add flagged a possible duplicate and you confirmed it is a separate entry')}},required:['action']}}}}
+
+function toolLedger(a){
+ const action=String(a.action||'view');
+ if(action==='edit'||action==='delete'){
+  const id=String(a.id||'').trim().replace(/^#/,''),e=ENT.find(x=>x.id===id);
+  if(!id||!e)return {text:tr('没找到编号「'+id+'」的账。','No entry with id "'+id+'". ')+recentLine()};
+  if(e.source!=='ai')return {text:tr('这笔是用户自己手动记的，你改不了。请用户去账本页点那一笔修改。','The user added this entry by hand, so you cannot change it. Ask them to tap it on the Ledger page.')};
+  if(!editable(e))return {text:tr('这笔是 48 小时以前记的，你改不了。请用户去账本页点那一笔修改。','This entry is more than 48 hours old, so you cannot change it. Ask the user to tap it on the Ledger page.')};
+  const before=snap(e);
+  if(action==='delete'){delEntry(id);
+   return {text:tr('删掉了：#'+id+' '+desc(before)+'。用户可以点聊天卡片上的「恢复」找回来。','Deleted #'+id+' '+desc(before)+'. The user can bring it back with "Restore" on the chat card.'),card:{kind:'del',snap:before}}}
+  const typ=a.type==='in'||a.type==='out'?a.type:e.type;
+  const cat=a.category!=null&&String(a.category).trim()?catResolve(typ,a.category):e.category;
+  if(!CATS[typ].some(x=>x[1]===cat))return {text:tr('没改：「'+cat+'」不是'+(typ==='in'?'收入':'支出')+'的分类。','Not changed: "'+cat+'" is not an '+(typ==='in'?'income':'expense')+' category. ')+catsLine()};
+  let amt=e.amount,ds=e.date;
+  if(a.amount!=null&&a.amount!==''){try{amt=checkAmt(a.amount)}catch(err){return {text:tr('没改：','Not changed: ')+err.message}}}
+  if(a.date){try{ds=iso(parseDate(a.date))}catch(err){return {text:tr('没改：','Not changed: ')+err.message}}}
+  const note=a.note!=null?String(a.note).trim().slice(0,120):e.note;
+  if(typ===e.type&&amt===e.amount&&cat===e.category&&note===e.note&&ds===e.date)return {text:tr('没改：给的内容和原来一样。#'+id+' 现在是 ','Not changed: nothing is different. #'+id+' is currently ')+desc(e)};
+  Object.assign(e,{type:typ,amount:amt,category:cat,note,date:ds,dt:ds+' '+((e.dt||'').slice(11,16)||'12:00')});saveEnt();
+  return {text:tr('改好了：','Updated: ')+'#'+id+' '+desc(before)+' → '+desc(e)+tr('。','. ')+dayLines(ds),card:{kind:'edit',id,before,after:snap(e)}}}
+ if(action==='add'){
+  const typ=a.type==='in'?'in':'out';let ds;
+  try{ds=iso(parseDate(a.date||''))}catch(e){return {text:tr('没记上：','Not recorded: ')+e.message}}
+  const cat=catResolve(typ,a.category),names=CATS[typ].map(x=>x[1]);
+  if(!cat)return {text:tr('没记：得给个分类。','Not recorded: a category is required. ')+catsLine()};
+  if(!names.includes(cat)){
+   const other=typ==='out'?'in':'out',oc=catResolve(other,a.category);
+   if(CATS[other].some(x=>x[1]===oc))return {text:tr('没记：「'+cat+'」是'+(other==='in'?'收入':'支出')+'那边的分类，这笔的 type 是'+(typ==='in'?'收入':'支出')+'，对不上。','Not recorded: "'+cat+'" is an '+(other==='in'?'income':'expense')+' category but this entry\'s type is '+(typ==='in'?'income':'expense')+'. ')+catsLine()+tr(' 确认一下是收是支，再调一次。',' Check whether it is money in or out and call again.')};
+   const lc=cat.toLowerCase(),hint=names.filter(n=>n!=='其他'&&(n.includes(cat)||cat.includes(n)||[...n].some(ch=>cat.includes(ch))||catLabel(typ,n).toLowerCase().includes(lc)||lc.includes(catLabel(typ,n).toLowerCase()))).map(n=>catLabel(typ,n));
+   return {text:tr('没记：「'+cat+'」不是账本里的分类。','Not recorded: "'+cat+'" is not a ledger category. ')+catsLine()+(hint.length?tr(' 看着像是要记到「'+hint.slice(0,3).join('、')+'」，用它再调一次；',' It looks like it belongs under "'+hint.slice(0,3).join('", "')+'"; call again with that.'):'')+tr(' 实在对不上就用「其他」。用户真想要新分类的话，请用户先在记一笔面板的「管理分类」里加好再记。',' If nothing fits, use "'+catLabel(typ,'其他')+'". If the user really wants a new category, ask them to add it first via "+" → "Manage".')}}
+  try{checkAmt(a.amount)}catch(e){return {text:tr('没记上：','Not recorded: ')+e.message}}
+  const [dup,why]=dupes(typ,a.amount,cat,ds);
+  if(dup.length&&!a.force){
+   const days=[...new Set(dup.map(x=>x.date))].sort().join('/');
+   const head=why==='sum'
+    ?tr('没记——疑似重复。'+days+' 的「'+catLabel(typ,cat)+'」已经有 '+dup.length+' 笔，加起来正好 ¥'+fmt(dup.reduce((s,x)=>s+x.amount,0))+'，像是用户分开记的几笔被你合成一笔又记了一遍：',
+       'Not recorded: possible duplicate. '+days+' already has '+dup.length+' "'+catLabel(typ,cat)+'" entries adding up to exactly ¥'+fmt(dup.reduce((s,x)=>s+x.amount,0))+'; it looks like you merged entries the user logged separately: ')
+    :tr('没记——疑似重复。'+days+' 已经有同金额的'+(typ==='in'?'收入':'支出')+'：','Not recorded: possible duplicate. '+days+' already has '+(typ==='in'?'income':'an expense')+' with the same amount: ');
+   return {text:head+dup.slice(0,4).map(x=>x.date.slice(5)+' '+brief(x)).join(' · ')+tr('。','. ')+dayLines(ds)+tr(' 如果这确实是另一笔（同样的钱又花/收了一次），先问用户确认，再带 force=true 调一次；如果就是同一笔，什么都不用做，告诉用户已经记过了。',' If this really is a separate entry (the same amount again), ask the user first, then call again with force=true. If it is the same one, do nothing and tell the user it is already recorded.'),
+    card:{kind:'dup',amount:r2(a.amount),category:cat}}}
+  let row;try{row=addEntry(typ,a.amount,cat,a.note||'',ds,'','ai')}catch(e){return {text:tr('没记上：','Not recorded: ')+e.message}}
+  return {text:tr('记下了（#'+row.id+'）：'+row.date+' '+catLabel(typ,row.category)+' ¥'+fmt(row.amount)+'（'+(typ==='in'?'收入':'支出')+(row.note?'，'+row.note:'')+'）。',
+    'Recorded (#'+row.id+'): '+row.date+' '+catLabel(typ,row.category)+' ¥'+fmt(row.amount)+' ('+(typ==='in'?'income':'expense')+(row.note?', '+row.note:'')+'). ')+dayLines(row.date),
+   card:{kind:'add',id:row.id,type:row.type,amount:row.amount,category:row.category,note:row.note,date:row.date}}}
+ const rng=['day','week','month','year'].includes(a.range)?a.range:'day';let s;
+ try{s=summarize(rng,a.date||'')}catch(e){return {text:tr('看不了：','Cannot view: ')+e.message}}
+ const card={kind:'view',range:rng,date:s.date,label:s.label};
+ const bal=(s.balance>=0?'+':'-')+'¥'+fmt(Math.abs(s.balance));
+ const L=[tr('【'+s.label+'】支出 ¥'+fmt(s.out_total)+' · 收入 ¥'+fmt(s.in_total)+' · 结余 '+bal+' · '+s.count+' 笔','['+s.label+'] spent ¥'+fmt(s.out_total)+' · earned ¥'+fmt(s.in_total)+' · balance '+bal+' · '+s.count+' entries')];
+ if(!s.count){L.push(tr('这段时间一笔都没记。','Nothing recorded in this period.'));return {text:L.join('\n'),card}}
+ if(s.by_cat.out.length)L.push(tr('支出分类：','Expenses by category: ')+s.by_cat.out.slice(0,10).map(x=>catLabel('out',x.category)+' ¥'+fmt(x.sum)+'('+x.n+')').join(' · '));
+ if(rng!=='day'&&s.top_in.length)L.push(tr('收入：','Income: ')+s.top_in.map(t=>t.date.slice(5)+' '+catLabel('in',t.category)+(t.note?'·'+t.note:'')+' +¥'+fmt(t.amount)).join(' · '));
+ else if(s.by_cat.in.length)L.push(tr('收入分类：','Income by category: ')+s.by_cat.in.slice(0,6).map(x=>catLabel('in',x.category)+' ¥'+fmt(x.sum)).join(' · '));
+ if(rng==='day'){s.entries.slice(0,20).forEach(e=>L.push(brief(e)));if(s.entries.length>20)L.push(tr('…还有 '+(s.entries.length-20)+' 笔','…and '+(s.entries.length-20)+' more'))}
+ else{const ser=s.series;
+  if(rng==='week')L.push(tr('按天支出：','Spending by day: ')+ser.map(x=>x.label+' ¥'+fmt(x.out)).join(' '));
+  else if(rng==='year')L.push(tr('按月支出：','Spending by month: ')+ser.filter(x=>x.out||x.in).map(x=>x.label+' ¥'+fmt(x.out)).join(' '));
+  else{const wk={};ser.forEach(x=>{const w=Math.floor((+x.label-1)/7)+1;wk[w]=(wk[w]||0)+x.out});L.push(tr('按周支出：','Spending by week: ')+Object.keys(wk).map(w=>tr('第'+w+'周','Week '+w+' ')+'¥'+fmt(wk[w])).join(' '))}
+  const tops=s.top.filter(t=>t.amount>=1).slice(0,5);
+  if(tops.length)L.push(tr('大额：','Biggest: ')+tops.map(t=>t.date.slice(5)+' '+catLabel('out',t.category)+(t.note?'·'+t.note:'')+' ¥'+fmt(t.amount)).join(' · '))}
+ return {text:L.join('\n'),card}}
+
+const BUILTIN_ZH=`你是「{NAME}」，在一个网页记账 App 里工作，是用户的记账助手。App 有四页：聊天（就是这里）、账本（按月看明细和收支日历，用户也可以点底栏中间的「＋」手动记）、统计（走势图和分类占比）、设置（换模型、改你的人设、开关每日提醒、换主题、切换语言、备份数据）。
+
+你的核心工作：
+- 用户随口说花了什么钱、收到了什么钱，你用 ledger 工具（action=add）帮用户记进账本。
+- 用户想知道花了多少、钱花在哪，用 ledger 工具（action=view）查了再用人话回答。工具没返回的数字一个也不要编。
+
+记账规则：
+1. 金额和用途都清楚就直接记，不用先问"要不要记"。一句话里有几笔就调用几次 add，一笔一次。
+2. type：花出去的是 out（支出），收进来的是 in（收入）。amount 单位是元，只填数字。
+3. category 只能从「当前情况」给的分类清单里选。带 * 的是用户自己加的分类，意思对得上就优先用它。实在对不上就用「其他」，不要编新分类；用户想要新分类，就请用户点「＋」→「管理分类」添加。
+4. note 写一句简短备注（买了什么、在哪），尽量用用户的原话。
+5. 日期：用户说"昨天""前天""上周五"就换算成 YYYY-MM-DD 填进 date；没说就是今天，可以不填。凌晨 0–5 点说的"今天"，多半指的是刚过去的那一天，拿不准就问一句。
+6. 记之前先看「当前情况」里今天已经记了什么，避免重复。工具返回"疑似重复"时不要自己硬记：问用户这是不是另一笔，用户确认是另一笔，再带 force=true 重新调用；如果就是同一笔，告诉用户已经记过了。
+7. 金额、收支方向或分类拿不准的时候，先问一句再记，别瞎猜。
+8. 你自己最近 48 小时内记的账，可以用 edit 改、用 delete 删（编号列在「当前情况」里）。用户说"刚才那笔改成 30""奶茶那笔删掉"，能确定是哪一笔就直接改，不用再问一遍；拿不准是哪一笔就先问。改删完 App 会给用户留撤销按钮。用户自己手动记的账、或者更早的账，你改不了，请用户去账本页点那一笔修改。
+9. 每次记完，用一两句话确认（记了什么、多少钱）就好，不要把整份账单复述一遍。
+10. 历史消息末尾括号里的「这一轮的工具操作」是 App 自动附上的记录，回复时不要模仿这种格式。
+
+聊天风格：
+- 像微信聊天一样口语、简短，一次回复一般不超过三四句。
+- 不要用 Markdown 标题、表格和代码块；金额写成 ¥25 这样。
+- 用户用什么语言说话，你就用什么语言回复（默认中文）。
+- 用户只是闲聊的时候，按你的人设正常聊，不必每句都扯回记账。
+- 下面「你的人设」决定你的名字、性格和说话方式；上面这些记账规则始终优先。`;
+const BUILTIN_EN=`You are "{NAME}", the bookkeeping assistant inside a personal ledger web app. The app has four pages: Chat (here), Ledger (monthly entries and a calendar; the user can also tap "+" in the bottom bar to add entries by hand), Stats (trend chart and category breakdown) and Settings (model, your persona, the daily reminder, theme, language and backups).
+
+Your job:
+- When the user mentions money they spent or received, record it with the ledger tool (action=add).
+- When they ask how much they spent or where the money went, check with the ledger tool (action=view) and answer in plain words. Never make up a number the tool did not return.
+
+Bookkeeping rules:
+1. If the amount and what it was for are clear, just record it. Don't ask "should I log this?". One message with several items means several add calls, one per item.
+2. type: money going out is out (expense), money coming in is in (income). amount is in yuan, numbers only.
+3. category must come from the category list under "Current status". Categories marked * were added by the user; prefer them when they fit. If nothing fits, use "Other" and never invent a category. If the user wants a new category, ask them to add it via "+" → "Manage".
+4. note: a short note (what or where), ideally in the user's own words.
+5. Dates: turn "yesterday", "the day before yesterday" or "last Friday" into YYYY-MM-DD for date; leave it out for today. "Today" said between midnight and 5 am usually means the day that just ended; ask if unsure.
+6. Before recording, check what is already logged today under "Current status" to avoid duplicates. If the tool reports a possible duplicate, don't force it: ask whether it is a separate entry, and only call again with force=true after the user confirms. If it is the same one, tell them it is already recorded.
+7. If the amount, direction or category is unclear, ask first instead of guessing.
+8. You can edit (edit) or delete (delete) entries you recorded yourself in the last 48 hours; their ids are listed under "Current status". When the user says "change that to 30" or "delete the bubble tea one", just do it if it is clear which entry they mean, and ask if it isn't. The app gives the user an undo button afterwards. You cannot change entries the user added by hand or older entries; ask them to tap that entry on the Ledger page.
+9. After recording, confirm in a sentence or two (what and how much). Don't recite the whole ledger.
+10. The "(Tool actions this turn: ...)" notes at the end of past messages are added by the app. Don't imitate that format.
+
+Style:
+- Casual and short, like texting. Usually no more than three or four sentences.
+- No Markdown headings, tables or code blocks. Write amounts like ¥25.
+- Reply in the language the user writes in (English by default).
+- If the user is just chatting, chat in character; you don't need to steer every message back to money.
+- "Your persona" below sets your name, personality and voice; the bookkeeping rules above always take priority.`;
+const builtinText=()=>tr(BUILTIN_ZH,BUILTIN_EN).split('{NAME}').join(aiName());
+function buildSystem(){
+ const now=new Date(),name=aiName(),call=(SET.user.call||'').trim();
+ const rel=[0,1,2].map(i=>{const d=new Date();d.setDate(d.getDate()-i);return tr(['今天','昨天','前天'][i]+'='+iso(d)+'('+wday(d)+')',['today','yesterday','the day before'][i]+'='+iso(d)+' ('+wday(d)+')')}).join(tr('，',', '));
+ const remind=SET.remind.on?tr('已开启，每天 '+SET.remind.time,'on, every day at '+SET.remind.time):tr('已关闭','off');
+ return builtinText()
+  +tr('\n\n【你的人设】\n你的名字是「'+name+'」。'+(call?'你称呼用户为「'+call+'」。':''),'\n\n[Your persona]\nYour name is "'+name+'".'+(call?' Call the user "'+call+'".':''))+'\n'+persona()
+  +tr('\n\n【当前情况】\n现在是 '+now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 '+wday(now)+' '+hm(now)+'。日期对照：','\n\n[Current status]\nIt is now '+WD_EN[now.getDay()]+', '+MON_EN[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear()+' '+hm(now)+'. Dates: ')+rel+tr('。','.')+'\n'+todayLine()+'\n'+recentLine()
+  +tr('\n每日提醒：'+remind+'（用户可以在聊天页右上角的铃铛或设置页里开关）。','\nDaily reminder: '+remind+' (the user can toggle it with the bell in Chat or in Settings).')}
+
+/* ---------------- 调模型 ---------------- */
+function apiRoot(){return (SET.api.base||'').trim().replace(/\/+$/,'').replace(/\/chat\/completions$/,'')}
+function apiUrl(){return apiRoot()+'/chat/completions'}
+function authHeaders(){const h={};if(SET.api.key)h.Authorization='Bearer '+SET.api.key.trim();return h}
+class ApiErr extends Error{constructor(status,body){super('HTTP '+status);this.status=status;this.body=body||''}}
+function friendly(e){
+ if(!e)return tr('出错了','Something went wrong');
+ if(e.name==='AbortError')return tr('已停止','Stopped');
+ if(e instanceof ApiErr){const b=(e.body||'').toLowerCase();
+  if(e.status===401||e.status===403)return tr('API Key 不对或没有权限（'+e.status+'），检查一下 key 和平台是不是对应。','The API key is wrong or lacks permission ('+e.status+'). Check that the key matches the provider.');
+  if(e.status===402||/balance|insufficient|quota|余额|欠费|arrear/.test(b))return tr('账户余额不足或额度用完了，充值后再试。','Out of balance or quota. Top up and try again.');
+  if(e.status===404)return tr('接口地址或模型名不对（404）。','Wrong base URL or model name (404).');
+  if(e.status===429)return tr('请求太频繁或被限流了，等一会儿再试。','Too many requests or rate-limited. Try again in a moment.');
+  if(e.status===400&&/model/.test(b)&&/support|exist|not found|invalid/.test(b))return tr('模型名不对，去设置里从列表重新选一个。','Model name not recognised. Pick one from the list in Settings.');
+  if(e.status===400&&/tool|function/.test(b))return tr('这个模型好像不支持工具调用，换一个模型试试。','This model does not seem to support tool calls. Try another model.');
+  let msg='';try{const j=JSON.parse(e.body);msg=(j.error&&(j.error.message||j.error))||j.message||''}catch(_){msg=e.body}
+  return tr('接口报错 ','API error ')+e.status+tr('：',': ')+String(msg).slice(0,140)}
+ if(e instanceof TypeError)return tr('连不上接口，检查一下网络和接口地址。','Cannot reach the API. Check your network and the base URL.');
+ return String(e.message||e).slice(0,160)}
+async function callModel(messages,o={}){
+ const S=SET.api,stream=S.stream&&!o.noStream;
+ const body={model:S.model,messages};
+ if(o.tools!==false){body.tools=[toolDef()];body.tool_choice='auto'}
+ if(stream)body.stream=true;
+ const r=await fetch(apiUrl(),{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHeaders()),body:JSON.stringify(body),signal:o.signal});
+ if(!r.ok){let t='';try{t=await r.text()}catch(_){}throw new ApiErr(r.status,t)}
+ const ct=r.headers.get('content-type')||'';
+ if(!stream||!r.body||ct.includes('application/json')){
+  const j=await r.json();if(j.error)throw new ApiErr(r.status||500,JSON.stringify(j));
+  const m=(j.choices&&j.choices[0]&&j.choices[0].message)||{};
+  if(m.content&&o.onDelta)o.onDelta(m.content);
+  return {content:m.content||'',tool_calls:normTC(m.tool_calls||[]),reasoning:m.reasoning_content||''}}
+ const rd=r.body.getReader(),dec=new TextDecoder();let buf='',content='',reasoning='';const tcs=[];
+ const eat=line=>{line=line.trim();if(!line.startsWith('data:'))return;const data=line.slice(5).trim();if(!data||data==='[DONE]')return;
+  let j;try{j=JSON.parse(data)}catch(_){return}
+  if(j.error)throw new ApiErr(500,JSON.stringify(j));
+  const d=j.choices&&j.choices[0]&&j.choices[0].delta;if(!d)return;
+  if(d.reasoning_content){reasoning+=d.reasoning_content;if(o.onThink)o.onThink()}
+  if(d.content){content+=d.content;if(o.onDelta)o.onDelta(d.content)}
+  if(d.tool_calls)for(const tc of d.tool_calls){
+   let k=tc.index;if(k==null){k=tc.id?tcs.findIndex(t=>t&&t.id===tc.id):tcs.length-1;if(k<0)k=tcs.length;if(k<0)k=0}
+   const t=tcs[k]||(tcs[k]={id:'',type:'function',function:{name:'',arguments:''}});
+   if(tc.id)t.id=tc.id;const f=tc.function||{};
+   if(f.name)t.function.name=t.function.name&&t.function.name!==f.name?t.function.name+f.name:f.name;
+   if(f.arguments)t.function.arguments+=typeof f.arguments==='string'?f.arguments:JSON.stringify(f.arguments)}};
+ for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+  while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i);buf=buf.slice(i+1);eat(line)}}
+ if(buf)eat(buf);
+ return {content,tool_calls:normTC(tcs),reasoning}}
+function normTC(list){return (list||[]).filter(Boolean).map((t,i)=>({id:t.id||('call_'+uid()+i),type:'function',function:{name:(t.function&&t.function.name)||'',arguments:typeof (t.function&&t.function.arguments)==='string'?(t.function.arguments||'{}'):JSON.stringify((t.function&&t.function.arguments)||{})}})).filter(t=>t.function.name)}
+
+/* ---------------- 自动拉取模型列表 ---------------- */
+const NON_CHAT=/embed|tts|whisper|audio|speech|dall-?e|image|rerank|moderation|asr|realtime|transcri|cogview|cogvideo|wanx|paraformer|sambert|video|ocr|search-preview/i;
+async function fetchModels(){
+ const r=await fetch(apiRoot()+'/models',{headers:authHeaders()});
+ if(!r.ok){let t='';try{t=await r.text()}catch(_){}throw new ApiErr(r.status,t)}
+ const j=await r.json();
+ let ids=(Array.isArray(j)?j:(j.data||j.models||[])).map(x=>typeof x==='string'?x:(x&&(x.id||x.name||x.model))).filter(x=>typeof x==='string'&&x);
+ ids=[...new Set(ids)];const chat=ids.filter(x=>!NON_CHAT.test(x));if(chat.length)ids=chat;
+ const pref=(PRESETS[SET.api.preset]||{}).models||[];
+ ids.sort((a,b)=>{const ia=pref.indexOf(a),ib=pref.indexOf(b);if(ia>=0||ib>=0)return (ia<0?99:ia)-(ib<0?99:ib);return a.localeCompare(b)});
+ return ids}
+function pickDefault(ids){const pref=(PRESETS[SET.api.preset]||{}).models||[];for(const p of pref)if(ids.includes(p))return p;return ids[0]||''}
+function modelList(){return SET.api.models.length&&SET.api.modelsFor===apiRoot()?SET.api.models:((PRESETS[SET.api.preset]||{}).models||[])}
+let fetchSeq=0;
+function modelHintIdle(){const h=$('#sModelHint');h.className='ghint';
+ h.textContent=SET.api.modelsFor===apiRoot()&&SET.api.models.length?tr('共 '+SET.api.models.length+' 个可用模型，点右边的箭头可以重新拉取',SET.api.models.length+' models available. Tap the arrows to reload.'):tr('填好 API Key 会自动拉取可用模型','Paste an API key and the model list loads automatically')}
+async function refreshModels(){
+ const h=$('#sModelHint'),btn=$('#sFetch'),seq=++fetchSeq;
+ if(!SET.api.base||(!SET.api.key&&SET.api.preset!=='custom')){modelHintIdle();return false}
+ h.className='ghint';h.textContent=tr('正在拉取模型列表…','Loading models…');btn.classList.add('spin');
+ try{const ids=await fetchModels();if(seq!==fetchSeq)return false;
+  if(!ids.length)throw new Error(tr('接口没有返回模型','The API returned no models'));
+  SET.api.models=ids;SET.api.modelsFor=apiRoot();
+  if(!ids.includes(SET.api.model))SET.api.model=pickDefault(ids);
+  saveSet();fillModelSelect();updHeader();
+  h.className='ghint ok';h.textContent=tr('Key 可用，拉到 '+ids.length+' 个模型，已选好 '+SET.api.model,'Key works. Found '+ids.length+' models, selected '+SET.api.model);return true}
+ catch(e){if(seq!==fetchSeq)return false;
+  h.className='ghint bad';h.textContent=tr('拉取失败：','Could not load models: ')+friendly(e);fillModelSelect();return false}
+ finally{if(seq===fetchSeq)btn.classList.remove('spin')}}
+function fillModelSelect(){
+ const sel=$('#sModel'),list=modelList(),cur=SET.api.model,inList=list.includes(cur);
+ sel.innerHTML=list.map(m=>'<option value="'+esc(m)+'"'+(m===cur?' selected':'')+'>'+esc(m)+'</option>').join('')+'<option value="__custom"'+(inList?'':' selected')+'>'+tr('手动输入…','Custom…')+'</option>';
+ $('#sCustomRow').hidden=inList;$('#sModelTxt').value=inList?'':cur}
+let keyT;
+function scheduleFetch(){clearTimeout(keyT);keyT=setTimeout(refreshModels,700)}
+
+/* ---------------- 聊天历史 → 发给模型的消息 ---------------- */
+function cardNote(c){
+ if(c.kind==='edit')return tr('把 #'+c.id+' 从 '+desc(c.before)+' 改成 '+desc(c.after)+(c.undone?'，用户又撤销改回去了':''),'changed #'+c.id+' from '+desc(c.before)+' to '+desc(c.after)+(c.undone?', then the user undid it':''));
+ if(c.kind==='del')return tr('删了 #'+c.snap.id+' '+desc(c.snap)+(c.undone?'，用户又撤销恢复了':''),'deleted #'+c.snap.id+' '+desc(c.snap)+(c.undone?', then the user restored it':''));
+ if(c.kind==='add'){const alive=ENT.some(e=>e.id===c.id);return tr('记下 #'+c.id+' '+desc(c)+(c.note?'':'')+(alive?'':'，后来被用户撤销或删除了'),'recorded #'+c.id+' '+desc(c)+(alive?'':', later undone or deleted by the user'))}
+ if(c.kind==='view')return tr('查看了'+c.label+'的账','checked '+c.label);
+ if(c.kind==='dup')return tr('一笔 ¥'+fmt(c.amount)+' 被判为疑似重复，没记','¥'+fmt(c.amount)+' flagged as a possible duplicate, not recorded');return ''}
+function history(upto){
+ const src=CHAT.slice(0,upto).filter(m=>!m.err&&!m.local).slice(-ctxN()),out=[];
+ for(const m of src){let c=(m.text||'').trim();
+  if(m.role==='assistant'&&m.cards&&m.cards.length){const n=m.cards.map(cardNote).filter(Boolean);if(n.length)c=(c?c+'\n':'')+tr('（这一轮的工具操作：'+n.join('；')+'）','(Tool actions this turn: '+n.join('; ')+')')}
+  if(!c)continue;const role=m.role==='user'?'user':'assistant',last=out[out.length-1];
+  if(last&&last.role===role)last.content+='\n'+c;else out.push({role,content:c})}
+ return out}
+
+/* ---------------- 一轮对话 ---------------- */
+let busy=false,ctrl=null;
+async function runTurn(hidden,opts={}){
+ busy=true;setBusy();
+ const m={id:uid(),role:'assistant',text:'',cards:[],ts:Date.now(),pending:true};if(opts.remind)m.remind=true;
+ const idx=CHAT.length;CHAT.push(m);renderChat(true);
+ const msgs=[{role:'system',content:buildSystem()},...history(idx)];
+ if(hidden)msgs.push({role:'user',content:hidden});
+ ctrl=new AbortController();let gap=false;
+ try{
+  for(let round=0;round<8;round++){
+   const res=await callModel(msgs,{signal:ctrl.signal,tools:!opts.noTools,
+    onDelta:t=>{if(gap&&m.text.trim())m.text+='\n';gap=false;m.text+=t;m.pending=false;m.thinking=false;updMsg(m)},
+    onThink:()=>{if(!m.thinking&&!m.text){m.thinking=true;updMsg(m)}}});
+   if(!res.tool_calls.length)break;
+   const am={role:'assistant',content:res.content||null,tool_calls:res.tool_calls};if(res.reasoning)am.reasoning_content=res.reasoning;msgs.push(am);
+   for(const tc of res.tool_calls){let args=null,out=null;
+    try{args=JSON.parse(tc.function.arguments||'{}')}catch(_){out={text:tr('参数不是合法的 JSON，没执行，请重新调用。','Arguments were not valid JSON, nothing done. Please call again.')}}
+    if(!out)out=tc.function.name==='ledger'?toolLedger(args||{}):{text:tr('没有这个工具：','No such tool: ')+tc.function.name};
+    if(out.card)m.cards.push(out.card);
+    const tm={role:'tool',tool_call_id:tc.id,content:out.text};if(SET.api.preset==='kimi')tm.name=tc.function.name;msgs.push(tm)}
+   gap=true;updMsg(m);
+   if(round===7)m.text+=(m.text?'\n':'')+tr('（工具调用太多次了，先停在这里）','(Too many tool calls, stopping here)')}
+ }catch(e){
+  if(e.name==='AbortError'){m.text=(m.text||'')+(m.text?'\n':'')+tr('（已停止）','(stopped)')}
+  else if(opts.remind){m.local=true;m.text=localRemind()}
+  else{m.err=true;m.errMsg=friendly(e)}}
+ m.pending=false;m.thinking=false;m.text=(m.text||'').trim();
+ if(!m.text&&!m.cards.length&&!m.err)m.text=tr('（没有回复内容）','(no reply)');
+ busy=false;ctrl=null;saveChat();updMsg(m);setBusy();
+ if(m.cards.some(c=>c.kind==='add'||c.kind==='edit'||c.kind==='del'))onData();
+ return m}
+function localRemind(){const c=(SET.user.call||'').trim();return tr((c?c+'，':'')+'今天还没记账哦，花了什么跟我说一声就行。',(c?c+', ':'')+"you haven't logged anything today. Just tell me what you spent.")}
+async function send(text){
+ text=(text!=null?text:$('#inp').value).trim();if(!text||busy)return;
+ if(!ready()){toast(tr('先去设置里填好 API Key','Add your API key in Settings first'));return}
+ $('#inp').value='';autosize();
+ CHAT.push({id:uid(),role:'user',text,ts:Date.now()});saveChat();renderChat(true);
+ await runTurn()}
+function retry(){const last=CHAT[CHAT.length-1];if(!last||!last.err||busy)return;CHAT.pop();saveChat();renderChat(true);runTurn()}
+
+/* ---------------- 聊天渲染 ---------------- */
+let stick=true;
+function mdTxt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}
+function dayLabel(ts){const d=new Date(ts),r=relDay(iso(d));return r+' '+wday(d)}
+function rcHTML(o){return '<div class="rc glass'+(o.inc?' in':'')+(o.gone?' gone':'')+'"><div class="ei">'+ico(o.type,o.cat)+'</div><div class="mid"><div class="t1">'+o.t1+'</div><div class="t2">'+o.t2+'</div></div><div class="amt num">'+(o.inc?'+':'-')+fmt2(o.amt)+'</div>'+(o.btn?'<button class="undo" data-i="'+o.i+'">'+o.btn+'</button>':'')+'</div>'}
+function diffTxt(b,a){const d=[],tl=t=>t==='in'?tr('收入','income'):tr('支出','expense');
+ if(b.type!==a.type)d.push(tl(b.type)+'→'+tl(a.type));
+ if(b.amount!==a.amount)d.push('¥'+fmt(b.amount)+'→¥'+fmt(a.amount));
+ if(b.category!==a.category)d.push(esc(catLabel(b.type,b.category))+'→'+esc(catLabel(a.type,a.category)));
+ if(b.date!==a.date)d.push(relDay(b.date)+'→'+relDay(a.date));
+ if(b.note!==a.note)d.push(tr('备注已改','note changed'));return d.join(' · ')||tr('已修改','edited')}
+const t1Of=v=>esc(catLabel(v.type,v.category))+(v.note?' · '+esc(v.note):'');
+function cardHTML(c,i){
+ if(c.kind==='add'){const e=ENT.find(x=>x.id===c.id),v=e||c;
+  return rcHTML({i,inc:v.type==='in',gone:!e,type:v.type,cat:v.category,amt:v.amount,t1:t1Of(v),t2:relDay(v.date)+' · '+(e?tr('已入账','saved'):tr('已撤销','undone')),btn:e?tr('撤销','Undo'):''})}
+ if(c.kind==='edit'){const e=ENT.find(x=>x.id===c.id),a=c.after;
+  return rcHTML({i,inc:a.type==='in',gone:c.undone||!e,type:a.type,cat:a.category,amt:a.amount,t1:t1Of(a),t2:c.undone?tr('已改回原样','reverted'):(e?tr('已修改 · ','edited · ')+diffTxt(c.before,a):tr('这笔后来被删了','deleted later')),btn:!c.undone&&e?tr('撤销','Undo'):''})}
+ if(c.kind==='del'){const b=c.snap,back=ENT.some(x=>x.id===b.id);
+  return rcHTML({i,inc:b.type==='in',gone:!back,type:b.type,cat:b.category,amt:b.amount,t1:t1Of(b),t2:back?tr('已恢复','restored'):tr('已删除','deleted'),btn:back?'':tr('恢复','Restore')})}
+ if(c.kind==='view')return '<button class="tchip vw" data-r="'+c.range+'" data-d="'+c.date+'">'+SV(IC.look)+tr('查看了 ','Checked ')+esc(c.label)+'</button>';
+ if(c.kind==='dup')return '<span class="tchip warn">'+tr('¥'+fmt(c.amount)+' 疑似重复，先没记','¥'+fmt(c.amount)+' looks like a duplicate, not saved')+'</span>';
+ return ''}
+function undoCard(c){
+ if(c.kind==='add'){if(delEntry(c.id))toast(tr('已撤销','Undone'))}
+ else if(c.kind==='edit'){const e=ENT.find(x=>x.id===c.id);if(e){Object.assign(e,c.before);c.undone=true;saveEnt();toast(tr('已改回原样','Reverted'))}}
+ else if(c.kind==='del'){if(!ENT.some(x=>x.id===c.snap.id)){ENT.push(Object.assign({},c.snap));c.undone=true;saveEnt();toast(tr('已恢复','Restored'))}}}
+function fillMsg(el,m){
+ el.className='msg '+(m.role==='user'?'u':'a')+(m.err?' err':'');
+ let h='';
+ if(m.remind)h+='<span class="tag">'+SV(IC.bell)+tr('每日提醒','Daily reminder')+'</span>';
+ if(m.cards)h+=m.cards.map((c,i)=>cardHTML(c,i)).join('');
+ if(m.pending&&!m.text)h+='<div class="bub"><span class="typing"><i></i><i></i><i></i></span>'+(m.thinking?'<span class="think">'+tr('思考中','Thinking')+'</span>':'')+'</div>';
+ if(m.text)h+='<div class="bub">'+mdTxt(m.text)+'</div>';
+ if(m.err)h+='<div class="bub e">'+esc(m.errMsg)+'</div><button class="retry">'+tr('重试','Retry')+'</button>';
+ if(!m.pending)h+='<div class="meta">'+hm(new Date(m.ts))+'</div>';
+ el.innerHTML=h;
+ el.querySelectorAll('.undo').forEach(b=>b.onclick=()=>{const c=m.cards[+b.dataset.i];if(!c)return;undoCard(c);saveChat();fillMsg(el,m)});
+ el.querySelectorAll('.vw').forEach(b=>b.onclick=()=>{const r=b.dataset.r,d=b.dataset.d;
+  if(r==='day'||r==='month'){LST.month=d.slice(0,7);LST.selDay=d;showTab('ledger')}else{LST.statRng=r;LST.statDate=d;showTab('stats')}});
+ const rt=el.querySelector('.retry');if(rt)rt.onclick=retry}
+function renderChat(force){
+ const box=$('#msgs');box.innerHTML='';
+ if(!CHAT.length){
+  const sugs=LANG==='en'?['Lunch 25, bubble tea 16','Taxi 38 yesterday','How much did I spend this month?','Got paid 6500 today']:['午饭 25，奶茶 16','昨天打车 38','这个月花了多少','今天发工资 6500'];
+  box.innerHTML='<div class="hello"><p>'+tr('说说今天花了什么，我帮你记进账本','Tell me what you spent today and I\'ll log it')+'</p><div class="sugs">'+sugs.map(s=>'<button class="glass">'+esc(s)+'</button>').join('')+'</div></div>';
+  box.querySelectorAll('.sugs button').forEach(b=>b.onclick=()=>{if(ready())send(b.textContent);else{$('#inp').value=b.textContent;autosize();toast(tr('先去设置里填好 API Key','Add your API key in Settings first'))}});return}
+ const elig=CHAT.filter(m=>!m.err&&!m.local&&!m.pending),cut=elig.length>ctxN()?elig[elig.length-ctxN()].id:null;
+ let last='';const frag=document.createDocumentFragment();
+ for(const m of CHAT){if(m.id===cut){const cv=document.createElement('div');cv.className='ctxcut';cv.textContent=tr('更早的聊天 '+aiName()+' 已经记不住了',aiName()+' no longer remembers the messages above');frag.append(cv)}
+  const d=dayLabel(m.ts);if(d!==last){const dv=document.createElement('div');dv.className='day';dv.textContent=d;frag.append(dv);last=d}
+  const el=document.createElement('div');el.id='m-'+m.id;fillMsg(el,m);frag.append(el)}
+ box.append(frag);if(force)stick=true;scrollBottom()}
+function updMsg(m){const el=document.getElementById('m-'+m.id);if(!el)return renderChat();fillMsg(el,m);scrollBottom()}
+function scrollBottom(){if(!stick)return;const b=$('#msgs');b.scrollTop=b.scrollHeight}
+$('#msgs').addEventListener('scroll',()=>{const b=$('#msgs');stick=b.scrollHeight-b.scrollTop-b.clientHeight<90},{passive:true});
+function setBusy(){const b=$('#send');b.innerHTML=SV(busy?IC.stop:IC.up,2);b.setAttribute('aria-label',busy?tr('停止','Stop'):tr('发送','Send'));b.disabled=!busy&&!ready()}
+function autosize(){const t=$('#inp');t.style.height='39px';t.style.height=Math.min(t.scrollHeight,132)+'px'}
+function updHeader(){
+ const n=aiName();$('#aiName').textContent=n;$('#ava').textContent=n.slice(0,1).toUpperCase();
+ $('#aiSub').innerHTML='<i class="'+(ready()?'':'off')+'"></i>'+esc(ready()?SET.api.model:tr('还没连上模型','Not connected'));
+ $('#nokey').hidden=ready();
+ const b=$('#bell'),on=SET.remind.on;b.classList.toggle('on',on);b.innerHTML=SV(on?IC.bell:IC.belloff)+'<span class="num" style="font-weight:600">'+(on?SET.remind.time:tr('关','Off'))+'</span>';
+ setBusy()}
+function updStrip(){const s=summarize('day',todayIso()),m=summarize('month',todayIso());
+ $('#tcard').innerHTML='<div><div class="k">'+tr('今日支出','Spent today')+'</div><div class="v num">¥'+fmt2(s.out_total)+'</div></div><div><div class="k">'+tr('今日收入','Earned today')+'</div><div class="v num in">¥'+fmt2(s.in_total)+'</div></div><div><div class="k">'+tr('本月支出','This month')+'</div><div class="v num">¥'+fmt(m.out_total)+'</div></div><span class="go">'+SV(IC.right)+'</span>'}
+
+const isTouch=matchMedia('(pointer: coarse)').matches;
+$('#inp').addEventListener('input',autosize);
+$('#inp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!isTouch){e.preventDefault();send()}});
+$('#inp').addEventListener('focus',()=>{if(isTouch)document.body.classList.add('kb')});
+$('#inp').addEventListener('blur',()=>document.body.classList.remove('kb'));
+$('#send').addEventListener('pointerdown',e=>e.preventDefault());
+$('#send').onclick=()=>{if(busy){if(ctrl)ctrl.abort()}else send()};
+$('#goSet').onclick=()=>showTab('set');
+$('#tcard').onclick=()=>{LST.month=todayIso().slice(0,7);LST.selDay=todayIso();showTab('ledger')};
+$('#bell').onclick=()=>{SET.remind.on=!SET.remind.on;saveSet();updHeader();
+ toast(SET.remind.on?tr('每天 '+SET.remind.time+' 提醒你记账','Daily reminder at '+SET.remind.time):tr('每日提醒已关闭','Daily reminder off'));
+ if(SET.remind.on&&'Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(_){}}};
+if(window.visualViewport){const vv=window.visualViewport,f=()=>{document.documentElement.style.setProperty('--vvh',vv.height+'px');if(document.body.dataset.tab==='chat')scrollBottom()};vv.addEventListener('resize',f);f()}
+
+/* ---------------- 每日提醒 ---------------- */
+const REMIND_HIDDEN=t=>tr('（这条是 App 发给你的定时提醒信号，用户看不到这句话。）现在到了每日记账提醒时间（'+t+'），用户今天还一笔都没记。请按你的人设主动开口，用一两句话提醒用户记一下今天的收支，可以顺口关心一下用户今天过得怎么样。不要调用工具，不要提到"系统""信号""提醒时间到了"这类字眼。',
+ '(This is a scheduled signal from the app; the user cannot see this line.) It is the daily logging reminder time ('+t+') and the user has not logged anything today. In character, start the conversation with one or two sentences reminding them to log today\'s spending, and maybe ask how their day went. Do not call any tools, and do not mention words like "system", "signal" or "reminder time".');
+let BASE_TITLE=document.title;
+async function doRemind(){
+ let m;
+ if(ready()&&!busy)m=await runTurn(REMIND_HIDDEN(SET.remind.time),{remind:true,noTools:true});
+ else{m={id:uid(),role:'assistant',text:localRemind(),ts:Date.now(),remind:true,local:true};CHAT.push(m);saveChat();renderChat(true)}
+ if(document.body.dataset.tab!=='chat')$('#tabs [data-t="chat"]').classList.add('unread');
+ if(document.hidden){document.title='(1) '+BASE_TITLE;
+  try{if('Notification' in window&&Notification.permission==='granted'){const n=new Notification(aiName(),{body:(m.text||'').slice(0,90),tag:'xz-remind'});n.onclick=()=>{window.focus();showTab('chat');n.close()}}}catch(_){}}}
+function remindCheck(){
+ if(!SET.remind.on||busy||!ready())return;const t=todayIso();if(LS.get('remindDay','')===t)return;
+ const [h,mi]=(SET.remind.time||'21:00').split(':').map(Number),now=new Date();
+ if(now.getHours()*60+now.getMinutes()<h*60+mi)return;
+ LS.set('remindDay',t);
+ if(summarize('day',t).count>0)return; /* 今天已经记过账, 不打扰 */
+ doRemind()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.title=BASE_TITLE;remindCheck()}});
+setInterval(remindCheck,20000);
+
+/* =====================================================================
+   页面切换
+   ===================================================================== */
+const LST={month:todayIso().slice(0,7),filter:'all',calOpen:false,selDay:todayIso(),statRng:'month',statDate:todayIso(),chartKind:'out',catKind:'out',stats:null,pickYear:0};
+const PAGES={chat:'pgChat',ledger:'pgLedger',stats:'pgStats',set:'pgSet'};
+function showTab(t){
+ document.body.dataset.tab=t;
+ $$('#tabs [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ for(const k in PAGES)$('#'+PAGES[k]).classList.toggle('on',k===t);
+ try{window.scrollTo(0,0)}catch(_){}
+ if(t==='chat'){$('#tabs [data-t="chat"]').classList.remove('unread');updStrip();stick=true;scrollBottom()}
+ if(t==='ledger')renderLedger();
+ if(t==='stats')renderStats();
+ if(t==='set')fillSettings()}
+$$('#tabs [data-t]').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function onData(){updStrip();const t=document.body.dataset.tab;if(t==='ledger')renderLedger();else if(t==='stats')renderStats()}
+
+/* =====================================================================
+   账本页: 月度主卡 + 收支日历 + 按天分组
+   ===================================================================== */
+const FL=()=>({all:tr('全部','All'),out:tr('支出','Spent'),in:tr('收入','Earned')});
+function entRow(e,sub){const r=document.createElement('div');r.className='er';
+ r.innerHTML='<div class="ei">'+ico(e.type,e.category)+'</div><div class="mid"><div class="et1">'+esc(catLabel(e.type,e.category))+(e.source==='ai'?'<span class="tag">'+esc(tr(aiName()+'记','by '+aiName()))+'</span>':'')+'</div><div class="et2">'+esc(sub)+(e.note?' | '+esc(e.note):'')+'</div></div><div class="ea num'+(e.type==='in'?' in':'')+'">'+(e.type==='in'?'+':'-')+fmt2(e.amount)+'</div>';
+ r.onclick=()=>openSheet(e);return r}
+function renderLedger(){
+ const s=summarize('month',LST.month+'-01'),cur=LST.month===todayIso().slice(0,7),bal=(s.balance>=0?'+':'-')+'¥'+fmt2(Math.abs(s.balance));
+ $('#mPick').innerHTML=esc(s.label)+SV(IC.down,2);$('#fPick').innerHTML=FL()[LST.filter]+SV(IC.down,2);
+ $('#toStats').innerHTML=tr('收支统计','Stats')+SV(IC.right,2);
+ $('#hOut').textContent='¥'+fmt2(s.out_total);$('#hIn').textContent='¥'+fmt2(s.in_total);
+ $('#hSub').textContent=tr((cur?'本月':'这个月')+'共 '+s.count+' 笔记录 · 结余 '+bal,s.count+(s.count===1?' entry':' entries')+(cur?' this month':'')+' · Balance '+bal);
+ renderCal(s);renderDays(s)}
+function renderCal(s){
+ const ti=todayIso(),box=$('#calc');box.classList.toggle('open',LST.calOpen);
+ $('#calTog').innerHTML=(LST.calOpen?tr('收起','Less'):tr('展开','More'))+SV(IC.down,2);
+ let cells=[];const pad=(pd(s.start).getDay()+6)%7;for(let i=0;i<pad;i++)cells.push(null);s.series.forEach(p=>cells.push(p));
+ while(cells.length%7)cells.push(null);
+ if(!LST.calOpen){const anchor=[LST.selDay,ti].find(d=>d>=s.start&&d<=s.end)||s.start;const idx=cells.findIndex(c=>c&&c.k===anchor);const row=Math.max(0,Math.floor(idx/7));cells=cells.slice(row*7,row*7+7)}
+ const heads=LANG==='en'?['M','T','W','T','F','S','S']:'一二三四五六日'.split('');
+ let h=heads.map(w=>'<div class="w">'+w+'</div>').join('');
+ cells.forEach(p=>{if(!p){h+='<div></div>';return}
+  const net=r2(p.in-p.out),has=p.in>0||p.out>0;
+  h+='<div class="c'+(p.k===ti?' today':'')+(p.k===LST.selDay?' sel':'')+(has?'':' off')+'" data-d="'+p.k+'"><b>'+p.label+'</b><i class="'+(net>0?'pos':'')+'">'+(has?(net>0?'+':net<0?'-':'')+cellNum(net):'&nbsp;')+'</i></div>'});
+ const el=$('#cal');el.innerHTML=h;
+ el.querySelectorAll('.c').forEach(c=>c.onclick=()=>{LST.selDay=c.dataset.d;renderCal(s);
+  const card=document.getElementById('d-'+c.dataset.d);
+  if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('flash');setTimeout(()=>card.classList.remove('flash'),1200)}
+  else toast(tr(relDay(c.dataset.d)+'没有记录','No entries on '+relDay(c.dataset.d)))})}
+$('#calTog').onclick=()=>{LST.calOpen=!LST.calOpen;renderCal(summarize('month',LST.month+'-01'))};
+function renderDays(s){
+ const box=$('#days');box.innerHTML='';const ti=todayIso();
+ let rows=ENT.filter(e=>e.date>=s.start&&e.date<=s.end);
+ const all={};rows.forEach(e=>(all[e.date]||(all[e.date]=[])).push(e));
+ if(LST.filter!=='all')rows=rows.filter(e=>e.type===LST.filter);
+ const g={};rows.forEach(e=>(g[e.date]||(g[e.date]=[])).push(e));
+ if(LST.filter==='all'&&ti>=s.start&&ti<=s.end&&!g[ti])g[ti]=[];
+ const dates=Object.keys(g).sort().reverse();
+ if(!dates.length){box.innerHTML='<div class="card glass"><div class="empty">'+(LST.filter==='all'?tr('这个月还没有记录','No entries this month'):tr('这个月没有'+FL()[LST.filter]+'记录','Nothing '+FL()[LST.filter].toLowerCase()+' this month'))+'</div></div>';return}
+ for(const ds of dates){
+  const list=g[ds].slice().sort((x,y)=>(y.dt+y.created).localeCompare(x.dt+x.created));
+  const day=all[ds]||[],o=day.filter(e=>e.type==='out').reduce((a,e)=>a+e.amount,0),i=day.filter(e=>e.type==='in').reduce((a,e)=>a+e.amount,0);
+  const d=pd(ds),rel=relDay(ds),isRel=ds===ti||rel===tr('昨天','Yesterday');
+  const card=document.createElement('div');card.className='dcard glass';card.id='d-'+ds;
+  card.innerHTML='<div class="dh"><b>'+md2(d)+'</b><span class="rel">'+(isRel?rel:wday(d))+'</span><span class="sp"></span><span class="t">'+tr('支','Out')+'<b>'+fmt2(o)+'</b></span><span class="t">'+tr('入','In')+'<b class="in">'+fmt2(i)+'</b></span></div>';
+  if(!list.length){const p=document.createElement('div');p.className='er ph';p.textContent=tr('今天还没记账，点 ＋ 或者在聊天里说一声','Nothing yet today. Tap + or tell the AI in Chat');card.append(p)}
+  list.forEach(e=>card.append(entRow(e,e.dt.slice(11,16))));
+  box.append(card)}}
+$('#fPick').onclick=()=>{LST.filter={all:'out',out:'in',in:'all'}[LST.filter];renderLedger()};
+$('#toStats').onclick=()=>{LST.statRng='month';LST.statDate=LST.month+'-01';showTab('stats')};
+/* 月份选择 */
+function openMonthPick(){LST.pickYear=+LST.month.slice(0,4);drawMonthPick();$('#mpop').hidden=false}
+function drawMonthPick(){
+ $('#pyLb').textContent=tr(LST.pickYear+'年',String(LST.pickYear));$('#pyPrev').innerHTML=SV(IC.left,2);$('#pyNext').innerHTML=SV(IC.right,2);
+ const now=todayIso().slice(0,7);let h='';
+ for(let m=1;m<=12;m++){const k=LST.pickYear+'-'+pad2(m);h+='<button data-k="'+k+'" class="'+(k===LST.month?'on':'')+(k===now?' now':'')+'">'+tr(m+'月',MON_EN[m-1])+'</button>'}
+ $('#pm').innerHTML=h;$$('#pm button').forEach(b=>b.onclick=()=>{LST.month=b.dataset.k;LST.selDay=b.dataset.k===now?todayIso():b.dataset.k+'-01';$('#mpop').hidden=true;renderLedger()})}
+$('#mPick').onclick=openMonthPick;
+$('#pyPrev').onclick=()=>{LST.pickYear--;drawMonthPick()};$('#pyNext').onclick=()=>{LST.pickYear++;drawMonthPick()};
+$('#mpop').onclick=e=>{if(e.target.id==='mpop')$('#mpop').hidden=true};
+
+/* =====================================================================
+   统计页
+   ===================================================================== */
+$$('#sSeg button').forEach(b=>b.onclick=()=>{LST.statRng=b.dataset.r;renderStats()});
+function shiftStat(dir){const d=pd(LST.statDate);
+ if(LST.statRng==='week')d.setDate(d.getDate()+7*dir);else if(LST.statRng==='month'){d.setDate(1);d.setMonth(d.getMonth()+dir)}else d.setFullYear(d.getFullYear()+dir);
+ LST.statDate=iso(d);renderStats()}
+$('#sPrev').innerHTML=SV(IC.left,2);$('#sNext').innerHTML=SV(IC.right,2);
+$('#sPrev').onclick=()=>shiftStat(-1);$('#sNext').onclick=()=>shiftStat(1);
+function renderStats(){
+ const d=summarize(LST.statRng,LST.statDate);LST.stats=d;
+ $('#sLb').textContent=d.label;$$('#sSeg button').forEach(x=>x.classList.toggle('on',x.dataset.r===LST.statRng));
+ $('#sOut').textContent='¥'+fmt(d.out_total);$('#sIn').textContent='¥'+fmt(d.in_total);$('#sBal').textContent=(d.balance<0?'-':'')+'¥'+fmt(Math.abs(d.balance));
+ $('#sN').textContent=tr('共 '+d.count+' 笔记录',d.count+(d.count===1?' entry':' entries'));
+ $('#statEmpty').hidden=!!d.count;drawChart(d);drawCats(d);drawTop(d)}
+function nice(v){const p=Math.pow(10,Math.floor(Math.log10(v||1)));for(const m of [1,2,2.5,5,10])if(m*p>=v)return m*p;return 10*p}
+function cssv(n,f){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||f}
+const isDark=()=>document.documentElement.hasAttribute('data-dark');
+function drawChart(d){
+ const card=$('#chartCard');if(!d.series||!d.count){card.hidden=true;return}card.hidden=false;
+ const S=d.series,hasIn=S.some(p=>p.in>0),hasOut=S.some(p=>p.out>0);
+ if(LST.chartKind==='in'&&!hasIn)LST.chartKind='out';if(LST.chartKind==='out'&&!hasOut&&hasIn)LST.chartKind='in';
+ $('#chSeg').hidden=!(hasIn&&hasOut);$$('#chSeg button').forEach(x=>x.classList.toggle('on',x.dataset.k===LST.chartKind));
+ const key=LST.chartKind,mut=cssv('--mut','#8b95a5'),gl=cssv('--line','rgba(0,0,0,.07)');
+ const col=key==='in'?cssv('--in','#d9574f'):(isDark()?'#b8c6dc':cssv('--hero1','#394557'));
+ const box=$('#chartBox'),W=box.clientWidth||330,H=180,L=36,R=10,T=18,B=24;
+ const mx=nice(Math.max(1,...S.map(p=>p[key])));
+ const X=i=>L+(W-L-R)*(S.length===1?.5:i/(S.length-1)),Y=v=>H-B-(H-T-B)*v/mx;
+ const path=S.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p[key]).toFixed(1)).join(' ');
+ let g='<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>';
+ for(let k=0;k<=2;k++){const v=mx*k/2,y=Y(v);g+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="'+gl+'"/><text x="'+(L-7)+'" y="'+(y+3)+'" text-anchor="end" font-size="9.5" fill="'+mut+'">'+(v>=10000?tr((v/10000)+'万',(v/1000)+'k'):v>=1000?(v/1000)+'k':v)+'</text>'}
+ const rg=LST.statRng,step=rg==='week'?1:(rg==='year'?2:5),last=S.length-1;
+ S.forEach((p,i)=>{const show=rg==='week'||i===0||i===last||((rg==='month'?(i+1)%step===0:i%step===0)&&last-i>=(rg==='month'?3:2));
+  if(show)g+='<text x="'+X(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="'+mut+'">'+esc(rg==='month'?(+p.k.slice(5,7))+'/'+p.label:p.label)+'</text>'});
+ g+='<path d="'+path+' L'+X(last)+' '+Y(0)+' L'+X(0)+' '+Y(0)+' Z" fill="url(#cg)" stroke="none"/>';
+ g+='<path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+ let mi=0;S.forEach((p,i)=>{if(p[key]>S[mi][key])mi=i});
+ if(S[mi][key]>0){const cx=X(mi),cy=Y(S[mi][key]);g+='<circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="'+cssv('--bg1','#fff')+'" stroke="'+col+'" stroke-width="2"/>';const tx=Math.min(Math.max(cx,L+26),W-R-26);
+  g+='<text x="'+tx+'" y="'+(cy-10)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="'+col+'">'+yen(S[mi][key])+'</text>'}
+ box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block">'+g+'</svg>'}
+$$('#chSeg button').forEach(b=>b.onclick=e=>{e.stopPropagation();LST.chartKind=b.dataset.k;if(LST.stats)drawChart(LST.stats)});
+function palette(){const h1=cssv('--hero1','#394557'),h2=cssv('--hero2','#5d6b82');
+ return isDark()?['#b8c6dc','#f08b84','#9fc2a6','#e3c08a','#b7abdb','#7fc0c4','#e0a3b8','#8c98ad']:[h1,'#e0857c',h2,'#a6bba2','#d4b07c','#9d92bd','#6fa7ac','#cc95a8']}
+$$('#catSeg button').forEach(b=>b.onclick=e=>{e.stopPropagation();LST.catKind=b.dataset.k;$$('#catSeg button').forEach(x=>x.classList.toggle('on',x===b));if(LST.stats)drawCats(LST.stats,true)});
+function drawCats(d,keep){
+ const card=$('#catCard'),oc=d.by_cat.out,icx=d.by_cat.in;
+ if(!oc.length&&!icx.length){card.hidden=true;return}card.hidden=false;
+ if(!keep){LST.catKind=oc.length?'out':'in';$$('#catSeg button').forEach(x=>x.classList.toggle('on',x.dataset.k===LST.catKind))}
+ $('#catSeg').hidden=!(oc.length&&icx.length);
+ const kind=LST.catKind,src=kind==='out'?oc:icx,tot=src.reduce((a,x)=>a+x.sum,0),dn=$('#donut'),ls=$('#catList');
+ if(!src.length||tot<=0){dn.innerHTML='';ls.innerHTML='<div class="empty">'+(kind==='out'?tr('这段时间没有支出','No expenses in this period'):tr('这段时间没有收入','No income in this period'))+'</div>';return}
+ const PAL=palette();
+ const items=src.slice(0,7).map((x,i)=>({name:catLabel(kind,x.category),sum:x.sum,n:x.n,color:PAL[i%PAL.length]}));
+ if(src.length>7)items.push({name:tr('其他小项','Others'),sum:src.slice(7).reduce((a,x)=>a+x.sum,0),n:src.slice(7).reduce((a,x)=>a+x.n,0),color:'#a3abb8'});
+ const ink=cssv('--ink','#1d2531'),mut=cssv('--mut','#8b95a5');
+ const SZ=184,R=68,SW=22,C=2*Math.PI*R,GAP=items.length>1?4:0;let g='',off=0;
+ items.forEach(it=>{const len=C*it.sum/tot,dl=Math.max(0,len-GAP);
+  g+='<circle cx="'+SZ/2+'" cy="'+SZ/2+'" r="'+R+'" fill="none" stroke="'+it.color+'" stroke-width="'+SW+'" stroke-linecap="butt" stroke-dasharray="'+dl.toFixed(2)+' '+(C-dl).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+SZ/2+' '+SZ/2+')"/>';off+=len});
+ const tt=yen(tot),tf=tt.length>9?17:(tt.length>7?19:22);
+ g+='<text x="'+SZ/2+'" y="'+(SZ/2-9)+'" text-anchor="middle" font-size="11" fill="'+mut+'">'+(kind==='out'?tr('总支出','Total spent'):tr('总收入','Total earned'))+'</text>';
+ g+='<text x="'+SZ/2+'" y="'+(SZ/2+16)+'" text-anchor="middle" font-size="'+tf+'" font-weight="700" fill="'+ink+'">'+tt+'</text>';
+ dn.innerHTML='<svg width="'+SZ+'" height="'+SZ+'" viewBox="0 0 '+SZ+' '+SZ+'">'+g+'</svg>';
+ const mx=items[0].sum;
+ ls.innerHTML=items.map(it=>{const pc=100*it.sum/tot;return '<div class="prow"><i class="pd" style="background:'+it.color+'"></i><span class="nm">'+esc(it.name)+'</span><span class="bar"><b style="width:'+(100*it.sum/mx).toFixed(1)+'%;background:'+it.color+'"></b></span><span class="amt num"'+(kind==='in'?' style="color:var(--in)"':'')+'>'+yen(it.sum)+'</span><span class="pc">'+(pc<1?'<1':Math.round(pc))+'%</span></div>'}).join('')}
+function drawTop(d){const card=$('#topCard'),box=$('#topList'),tops=(d.top||[]).slice(0,5);
+ if(!tops.length){card.hidden=true;return}card.hidden=false;box.innerHTML='';
+ tops.forEach(e=>box.append(entRow(e,md2(pd(e.date)))))}
+
+/* =====================================================================
+   记一笔
+   ===================================================================== */
+let sheetTyp='out',editing=null,mng=false;
+function setTyp(t){sheetTyp=t;$$('#tSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));drawChips()}
+$$('#tSeg button').forEach(b=>b.onclick=()=>setTyp(b.dataset.t));
+function drawChips(){
+ const box=$('#chips'),list=CATS[sheetTyp]||[];box.innerHTML='';
+ let sel=editing&&editing.type===sheetTyp?editing.category:LS.get('lastCat_'+sheetTyp,'');if(!list.some(x=>x[1]===sel))sel=list[0]&&list[0][1];
+ list.forEach(x=>{const c=document.createElement('button');c.type='button';c.className='chip'+(x[1]===sel?' on':'');c.dataset.n=x[1];
+  c.innerHTML='<span class="ei">'+ico(sheetTyp,x[1])+'</span>'+esc(catLabel(sheetTyp,x[1]))+(mng&&x[1]!=='其他'?'<span class="x">×</span>':'');
+  c.onclick=e=>{if(e.target.classList.contains('x')){delCatUI(x[1]);return}if(mng){editIcon(x[1]);return}
+   box.querySelectorAll('.chip').forEach(y=>y.classList.toggle('on',y===c));LS.set('lastCat_'+sheetTyp,x[1])};
+  box.append(c)});
+ $('#addcat').hidden=!mng;$('#mngBtn').textContent=mng?tr('完成','Done'):tr('管理分类','Manage')}
+function editIcon(name){
+ if(DEF_NAMES[sheetTyp].has(name)&&ICO[name]){toast(tr('默认分类的图标换不了','Default category icons cannot be changed'));return}
+ const f=CATS[sheetTyp].find(x=>x[1]===name),cur=f&&f[0]!=='✨'?f[0]:'';
+ const sym=prompt(tr('给「'+name+'」换个图标（emoji 或符号都行，留空用默认）','Pick an icon for "'+name+'" (any emoji or symbol; leave empty for the default)'),cur);if(sym===null)return;
+ if(f)f[0]=sym.trim().slice(0,4)||'✨';saveCats();drawChips();toast(tr('换好了','Updated'))}
+function delCatUI(name){try{if(!confirm(tr('删掉分类「'+name+'」？已记的账不受影响。','Delete the category "'+catLabel(sheetTyp,name)+'"? Existing entries stay as they are.')))return;catDel(sheetTyp,name);drawChips()}catch(e){toast(e.message)}}
+$('#mngBtn').onclick=()=>{mng=!mng;drawChips()};
+$('#acGo').onclick=()=>{try{catAdd(sheetTyp,$('#acNm').value,$('#acSym').value);$('#acNm').value='';$('#acSym').value='';drawChips();toast(tr('加好了，AI 也能用这个分类','Added. The AI can use it too'))}catch(e){toast(e.message)}};
+function openSheet(entry){
+ editing=entry||null;mng=false;
+ setTyp(entry?entry.type:LS.get('lastTyp','out'));
+ $('#fAmt').value=entry?entry.amount:'';$('#fNote').value=entry?entry.note:'';
+ const t=document.body.dataset.tab;
+ $('#fDate').value=entry?entry.date:(t==='ledger'&&LST.selDay.slice(0,7)===LST.month?LST.selDay:todayIso());
+ $('#fDel').hidden=!entry;$('#fSave').textContent=entry?tr('保存修改','Save changes'):tr('记下','Save');
+ document.body.classList.add('open');if(!entry&&!isTouch)setTimeout(()=>{try{$('#fAmt').focus()}catch(_){}},300)}
+function closeSheet(){document.body.classList.remove('open');editing=null}
+$('#plus').querySelector('span').innerHTML=SV(IC.plus,2.2);
+$('#plus').onclick=()=>openSheet(null);$('#ovl').onclick=closeSheet;
+$('#fSave').onclick=()=>{
+ const on=$('#chips .chip.on'),body={type:sheetTyp,amount:$('#fAmt').value,category:on?on.dataset.n:'其他',note:$('#fNote').value,date:$('#fDate').value};
+ try{if(editing)editEntry(editing.id,body);else addEntry(body.type,body.amount,body.category,body.note,body.date,'','user');
+  LS.set('lastTyp',sheetTyp);const was=!!editing;closeSheet();toast(was?tr('已保存','Saved'):tr('记下了','Saved'));renderChat()}catch(e){toast(e.message)}};
+$('#fDel').onclick=()=>{if(!editing||!confirm(tr('删除这一笔？','Delete this entry?')))return;delEntry(editing.id);closeSheet();toast(tr('已删除','Deleted'));renderChat()};
+
+/* =====================================================================
+   设置页
+   ===================================================================== */
+function mixWhite(hex,t){const n=parseInt(hex.replace('#',''),16);const c=[n>>16&255,n>>8&255,n&255].map(v=>Math.round(v+(255-v)*t));return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function rgba(hex,a){const n=parseInt(hex.replace('#',''),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
+function applyTheme(){
+ const mode=SET.theme.mode,dark=mode==='dark'||(mode==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+ const root=document.documentElement;root.toggleAttribute('data-dark',dark);
+ let th=THEMES[SET.theme.name]||THEMES.slate;
+ if(SET.theme.custom){const c=SET.theme.custom;th={h1:c,h2:mixWhite(c,.25),bg1:mixWhite(c,.9),bg2:mixWhite(c,.8),b1:rgba(mixWhite(c,.4),.45),b2:rgba(mixWhite(c,.6),.5)}}
+ const v={'--hero1':th.h1,'--hero2':th.h2,'--ac':dark?mixWhite(th.h2,.12):th.h1,'--blob1':th.b1,'--blob2':th.b2};
+ if(!dark){v['--bg1']=th.bg1;v['--bg2']=th.bg2}else{v['--bg1']='';v['--bg2']=''}
+ for(const k in v){if(v[k])root.style.setProperty(k,v[k]);else root.style.removeProperty(k)}
+ const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=dark?'#0e1219':th.bg1;
+ if(document.body.dataset.tab==='stats'&&LST.stats){drawChart(LST.stats);drawCats(LST.stats,true)}}
+function fillSettings(){
+ const A=SET.api;
+ $$('#sLang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
+ $('#sPreset').innerHTML=Object.entries(PRESETS).map(([k,p])=>'<option value="'+k+'"'+(k===A.preset?' selected':'')+'>'+esc(tr(p.n,p.e))+'</option>').join('');
+ $('#sBase').value=A.base;$('#sKey').value=A.key;$('#sStream').checked=!!A.stream;$('#sCtx').value=ctxN();
+ $('#sEye').textContent=$('#sKey').type==='password'?tr('显示','Show'):tr('隐藏','Hide');
+ $('#sFetch').innerHTML=SV(IC.refresh);
+ fillModelSelect();
+ $('#sName').value=SET.ai.name;$('#sName').placeholder=tr('小账','Tally');$('#sCall').value=SET.user.call;$('#sPersona').value=persona();
+ $('#sRemOn').checked=SET.remind.on;$('#sRemTime').value=SET.remind.time;
+ $('#sSw').innerHTML=Object.entries(THEMES).map(([k,t])=>'<button data-k="'+k+'" class="'+(k===SET.theme.name&&!SET.theme.custom?'on':'')+'" type="button"><i style="background:linear-gradient(150deg,'+t.h1+','+t.h2+')"></i>'+tr(t.n,t.e)+'</button>').join('');
+ $$('#sSw button').forEach(b=>b.onclick=()=>{SET.theme.name=b.dataset.k;SET.theme.custom='';saveSet();applyTheme();fillSettings()});
+ $('#sColor').value=SET.theme.custom||(THEMES[SET.theme.name]||THEMES.slate).h1;
+ $$('#sMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===SET.theme.mode));
+ $('#sBuiltin').textContent=builtinText();
+ $('#sBuiltinArrow').innerHTML=SV($('#sBuiltinWrap').hidden?IC.right:IC.down);
+ $$('#pgSet .arr').forEach(a=>a.innerHTML=SV(IC.right));
+ updNotifBtn();updInstall();
+ if(ready()&&SET.api.modelsFor!==apiRoot())refreshModels();else modelHintIdle()}
+function updNotifBtn(){const t=$('#sNotifTxt');
+ if(!('Notification' in window)){t.textContent=tr('这个浏览器不支持系统通知','This browser does not support notifications');return}
+ t.textContent=Notification.permission==='granted'?tr('浏览器通知：已允许','Notifications: allowed'):(Notification.permission==='denied'?tr('浏览器通知：已被拦截','Notifications: blocked'):tr('允许浏览器通知','Allow notifications'))}
+let saveT;function saved(){clearTimeout(saveT);saveT=setTimeout(()=>toast(tr('已保存','Saved')),400)}
+function setLang(l){
+ if(l===LANG)return;LANG=l;SET.lang=l;saveSet();
+ applyStatic();BASE_TITLE=document.title;updHeader();updStrip();renderChat();setBusy();
+ fillSettings();toast(tr('已切换到中文','Switched to English'))}
+$$('#sLang button').forEach(b=>b.onclick=()=>setLang(b.dataset.l));
+$('#sPreset').onchange=e=>{const k=e.target.value,p=PRESETS[k];SET.api.preset=k;if(k!=='custom'){SET.api.base=p.base;SET.api.model=p.models[0]||''}
+ SET.api.models=[];SET.api.modelsFor='';saveSet();$('#sBase').value=SET.api.base;fillModelSelect();updHeader();scheduleFetch()};
+$('#sBase').oninput=e=>{SET.api.base=e.target.value.trim();saveSet();updHeader()};
+$('#sBase').onchange=()=>scheduleFetch();
+$('#sKey').oninput=e=>{SET.api.key=e.target.value.trim();saveSet();updHeader();scheduleFetch()};
+$('#sModel').onchange=e=>{const v=e.target.value;if(v==='__custom'){$('#sCustomRow').hidden=false;$('#sModelTxt').focus();return}
+ $('#sCustomRow').hidden=true;SET.api.model=v;saveSet();updHeader();saved()};
+$('#sModelTxt').oninput=e=>{SET.api.model=e.target.value.trim();saveSet();updHeader()};
+$('#sFetch').onclick=()=>refreshModels();
+$('#sStream').onchange=e=>{SET.api.stream=e.target.checked;saveSet();saved()};
+$('#sCtx').onchange=e=>{SET.chat.ctx=Math.min(200,Math.max(2,Math.round(+e.target.value)||30));e.target.value=SET.chat.ctx;saveSet();renderChat();saved()};
+$('#sEye').onclick=()=>{const k=$('#sKey');k.type=k.type==='password'?'text':'password';$('#sEye').textContent=k.type==='password'?tr('显示','Show'):tr('隐藏','Hide')};
+$('#sName').oninput=e=>{SET.ai.name=e.target.value.trim();saveSet();updHeader();if(!CHAT.length)renderChat()};
+$('#sCall').oninput=e=>{SET.user.call=e.target.value.trim();saveSet()};
+$('#sPersona').oninput=e=>{const v=e.target.value;SET.ai.persona=(v.trim()===DEF_PERSONA_ZH||v.trim()===DEF_PERSONA_EN)?'':v;saveSet()};
+['#sName','#sCall','#sPersona'].forEach(s=>$(s).addEventListener('change',saved));
+$('#sPReset').onclick=()=>{if(!confirm(tr('把人设换回默认的？','Reset the persona to the default?')))return;SET.ai.persona='';saveSet();$('#sPersona').value=persona();toast(tr('已恢复默认人设','Persona reset'))};
+$('#sBuiltinBtn').onclick=()=>{const w=$('#sBuiltinWrap');w.hidden=!w.hidden;$('#sBuiltinArrow').innerHTML=SV(w.hidden?IC.right:IC.down)};
+$('#sRemOn').onchange=e=>{SET.remind.on=e.target.checked;saveSet();updHeader();saved()};
+$('#sRemTime').onchange=e=>{SET.remind.time=e.target.value||'21:00';LS.del('remindDay');saveSet();updHeader();saved()};
+$('#sNotif').onclick=async()=>{if(!('Notification' in window))return;try{await Notification.requestPermission()}catch(_){}updNotifBtn()};
+$('#sRemTry').onclick=()=>{if(busy){toast(tr('等它说完这句','Wait for it to finish'));return}showTab('chat');doRemind()};
+$('#sColor').oninput=e=>{SET.theme.custom=e.target.value;saveSet();applyTheme();$$('#sSw button').forEach(b=>b.classList.remove('on'))};
+$$('#sMode button').forEach(b=>b.onclick=()=>{SET.theme.mode=b.dataset.m;saveSet();applyTheme();$$('#sMode button').forEach(x=>x.classList.toggle('on',x===b))});
+$('#sTest').onclick=async()=>{
+ const o=$('#sTestOut');if(!SET.api.base||!SET.api.model){o.className='ghint bad';o.textContent=tr('先填接口地址和模型','Fill in the base URL and model first');return}
+ o.className='ghint';o.textContent=tr('连接中…','Connecting…');
+ try{await callModel([{role:'user',content:tr('只回复两个字：在的','Reply with one word: here')}],{tools:false,noStream:true});
+  o.textContent=tr('已连上，正在试工具调用…','Connected, testing tool calls…');
+  const t=await callModel([{role:'system',content:tr('你是记账助手，必须用工具回答。','You are a bookkeeping assistant. You must answer by calling the tool.')},{role:'user',content:tr('帮我查一下今天的账。','Check today\'s ledger for me.')}],{noStream:true});
+  if(t.tool_calls.length){o.className='ghint ok';o.textContent=tr('连接正常，工具调用正常','Connection OK, tool calls OK')}
+  else{o.className='ghint bad';o.textContent=tr('能连上，但这个模型没调用工具，记账可能不灵，建议换一个','Connected, but this model did not call the tool, so logging may not work well. Try another model.')}}
+ catch(e){o.className='ghint bad';o.textContent=friendly(e)}};
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800)}
+$('#dExp').onclick=()=>{const data={app:'xiaozhang-ai-ledger',version:5,exported:new Date().toISOString(),entries:ENT,cats:CATS,chat:CHAT,settings:Object.assign(clone(SET),{api:Object.assign({},SET.api,{key:''})})};
+ download(tr('小账备份-','tally-backup-')+todayIso()+'.json',JSON.stringify(data,null,1),'application/json');toast(tr('备份已导出','Backup exported'))};
+$('#dCsv').onclick=()=>{const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+ const rows=[[tr('日期','Date'),tr('时间','Time'),tr('类型','Type'),tr('分类','Category'),tr('金额','Amount'),tr('备注','Note'),tr('记录者','Added by')]].concat(ENT.slice().sort((a,b)=>a.dt.localeCompare(b.dt)).map(e=>[e.date,e.dt.slice(11,16),e.type==='in'?tr('收入','Income'):tr('支出','Expense'),catLabel(e.type,e.category),e.amount,e.note,e.source==='ai'?aiName():tr('手动','Manual')]));
+ download(tr('小账账目-','tally-entries-')+todayIso()+'.csv','﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n'),'text/csv');toast(tr('表格已导出','Spreadsheet exported'))};
+$('#dImp').onclick=()=>$('#dFile').click();
+$('#dFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.entries))throw new Error(tr('这不是小账的备份文件','This is not a Tally backup file'));
+  const ok=d.entries.filter(x=>x&&x.id&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&(x.type==='in'||x.type==='out')&&+x.amount>0&&x.category);
+  if(!confirm(tr('备份里有 '+ok.length+' 笔账。导入会覆盖现在的账目、分类和聊天记录，继续吗？','The backup has '+ok.length+' entries. Importing replaces your current entries, categories and chat. Continue?')))return;
+  ENT=ok.map(x=>({id:String(x.id),dt:x.dt||x.date+' 12:00',date:x.date,type:x.type,amount:r2(x.amount),category:String(x.category),note:String(x.note||''),source:x.source==='ai'?'ai':'user',created:x.created||new Date().toISOString()}));
+  if(d.cats&&Array.isArray(d.cats.out)&&Array.isArray(d.cats.in))CATS=d.cats;
+  if(Array.isArray(d.chat))CHAT=d.chat;
+  if(d.settings){const key=SET.api.key,lang=SET.lang;SET=mergeSet(d.settings);if(!SET.api.key)SET.api.key=key;SET.lang=lang}
+  saveCats();saveChat();saveSet();saveEnt();applyTheme();updHeader();renderChat(true);fillSettings();toast(tr('导入好了','Imported'))}
+ catch(err){toast(tr('导入失败：','Import failed: ')+err.message)}};
+$('#dChat').onclick=()=>{if(!confirm(tr('清空所有聊天记录？账目不受影响。','Clear all chat history? Your entries are not affected.')))return;CHAT=[];saveChat();renderChat();toast(tr('聊天记录已清空','Chat cleared'))};
+$('#dAll').onclick=()=>{if(!confirm(tr('清空全部账目、分类和聊天记录？设置和 API Key 会保留。\n这一步撤不回，建议先导出备份。','Erase all entries, categories and chat? Settings and the API key are kept.\nThis cannot be undone. Export a backup first.')))return;
+ ENT=[];CATS=clone(DEFAULT_CATS);CHAT=[];saveCats();saveChat();saveEnt();LS.del('remindDay');renderChat();toast(tr('已全部清空','All data erased'))};
+$('#dDemo').onclick=()=>{if(!confirm(tr('往账本里填一个多月的示例账目，方便看图表效果。之后可以用「清空全部数据」删掉。继续？','Add about a month of sample entries so the charts have something to show? You can remove them later with "Erase all data".')))return;
+ const items=[['餐饮',tr('早餐','Breakfast'),[6,15]],['餐饮',tr('午饭','Lunch'),[18,38]],['餐饮',tr('晚饭','Dinner'),[22,68]],['交通',tr('地铁','Subway'),[3,8]],['交通',tr('打车','Taxi'),[15,45]],['购物',tr('网购','Online order'),[40,260]],['日用',tr('超市','Groceries'),[20,120]],['娱乐',tr('电影','Movie'),[35,80]],['学习',tr('买书','Books'),[30,90]],['人情',tr('聚餐 AA','Group dinner'),[60,180]],['医疗',tr('药店','Pharmacy'),[20,80]]];
+ const now=new Date(),mk=(ds,tm,typ,amt,cat,note)=>({id:uid(),dt:ds+' '+tm,date:ds,type:typ,amount:amt,category:cat,note,source:'user',created:new Date().toISOString()});let n=0;
+ for(let i=40;i>=1;i--){const d=new Date(now);d.setDate(now.getDate()-i);const ds=iso(d);
+  const k=2+Math.floor(Math.random()*3);for(let j=0;j<k;j++){const it=items[Math.floor(Math.random()*(j===0?4:items.length))];if(it[0]==='人情'&&Math.random()<.7)continue;
+   ENT.push(mk(ds,pad2(8+j*4)+':'+pad2(Math.floor(Math.random()*60)),'out',Math.round(it[2][0]+Math.random()*(it[2][1]-it[2][0])),it[0],it[1]));n++}
+  if(d.getDate()===10){ENT.push(mk(ds,'10:00','in',6500,'工资',tr('工资','Salary')));n++}
+  if(i===12||i===30){ENT.push(mk(ds,'19:00','in',800,'兼职',tr('兼职','Side job')));n++}}
+ if(!ENT.some(e=>e.date===todayIso())){ENT.push(mk(todayIso(),'08:20','out',12,'餐饮',tr('早餐','Breakfast')));n++}
+ saveEnt();toast(tr('填了 '+n+' 笔示例账目','Added '+n+' sample entries'))};
+
+/* =====================================================================
+   添加到桌面 (PWA)
+   ===================================================================== */
+let installEvt=null;
+const isWeb=/^https?:$/.test(location.protocol);
+const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;updInstall()});
+window.addEventListener('appinstalled',()=>{installEvt=null;toast(tr('已添加到桌面','Added to home screen'));updInstall()});
+function updInstall(){
+ const t=$('#sInstallTxt'),h=$('#sInstallHint');
+ if(standalone()){t.textContent=tr('已经是桌面应用了','Running as an app');h.textContent=tr('账目存在这个桌面应用里，换手机前记得导出备份。','Your entries live in this app. Export a backup before changing phones.');return}
+ t.textContent=tr('添加到手机桌面','Add to home screen');
+ if(!isWeb){h.textContent=tr('要先部署成网址（比如 GitHub Pages）才能添加到桌面，直接打开的文件不行。','This only works once the app is hosted at a web address (e.g. GitHub Pages), not when opened as a file.');return}
+ h.textContent=isIOS?tr('苹果手机上，桌面应用和 Safari 里的数据是分开存的，建议一开始就添加到桌面，之后都从桌面图标打开。','On iPhone, the home-screen app and Safari keep separate data. Add it to your home screen first and always open it from there.'):tr('添加之后像 App 一样从桌面图标打开，全屏显示，没网也能看账本。','Once added, it opens full-screen from your home screen like an app, and the ledger works offline.')}
+$('#sInstall').onclick=async()=>{
+ if(standalone()){toast(tr('已经是桌面应用了','Already running as an app'));return}
+ if(!isWeb){toast(tr('先部署成网址才能添加','Host it at a web address first'));return}
+ if(installEvt){installEvt.prompt();try{await installEvt.userChoice}catch(_){}installEvt=null;updInstall();return}
+ $('#sInstallHint').textContent=isIOS?tr('在 Safari 底部点「分享」按钮，往下找到「添加到主屏幕」。苹果手机上桌面应用和 Safari 的数据是分开存的，添加之后就从桌面图标打开用。','In Safari, tap the Share button, then "Add to Home Screen". On iPhone the app and Safari keep separate data, so use the home-screen icon from then on.'):tr('打开浏览器右上角的菜单，选「添加到主屏幕」或「安装应用」。','Open the browser menu and choose "Add to Home screen" or "Install app".')};
+if(isWeb){
+ if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(_){}}
+
+/* =====================================================================
+   启动
+   ===================================================================== */
+window.addEventListener('resize',()=>{if(document.body.dataset.tab==='stats'&&LST.stats)drawChart(LST.stats)});
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme)}catch(_){}
+applyStatic();BASE_TITLE=document.title;
+applyTheme();updHeader();updStrip();renderChat(true);autosize();
+/* 有 key 但模型列表还没拉过 (或者模型名填错了), 打开时先悄悄拉一次 */
+if(SET.api.key&&SET.api.base&&SET.api.modelsFor!==apiRoot())refreshModels();
+if(!ready())setTimeout(()=>toast(tr('先去「设置」里填一下 API Key','Add your API key in Settings to get started')),600);
+setTimeout(remindCheck,1500);
+</script>
+</body>
+</html>
